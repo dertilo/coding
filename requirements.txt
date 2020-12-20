@@ -1,2 +1,2 @@
-typeguard
+git+https://github.com/dertilo/typeguard.git@tilo
 redbaron
