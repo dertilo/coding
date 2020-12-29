@@ -28,7 +28,8 @@ def build_annotation_add_to_imports(qualname):
         ann_name = f"Tuple[{','.join(type_names)}]"
     else:
         module_path, ann_name = build_path_name(qualname)
-        imports.add(f"from {module_path} import {ann_name}")
+        if module_path is not None:
+            imports.add(f"from {module_path} import {ann_name}")
 
     return ann_name, imports
 
@@ -75,15 +76,18 @@ arg_name_blacklist = ["self", "cls"]
 def add_annotations(red, tl: TypesLog):
     imports = set()
     def_node = red.find("def", name=tl.qualname.split(".")[-1])
-    for arg in def_node.arguments:
-        arg_name = arg.name.fst()["value"]
-        if arg_name not in arg_name_blacklist:
-            arg_type = tl.arg2type[arg_name]
-            fst, additional_imports = build_annotation_fst(arg_type)
-            imports |= additional_imports
+    argName_to_node = {arg.name.fst()["value"]: arg for arg in def_node.arguments}
+    logged_names_types = (
+        (n, t) for n, t in tl.arg2type.items() if n not in arg_name_blacklist
+    )
 
-            if fst is not None:
-                arg.annotation = fst
+    for arg_name, arg_type in logged_names_types:
+        arg_type = tl.arg2type[arg_name]
+        fst, additional_imports = build_annotation_fst(arg_type)
+        imports |= additional_imports
+
+        if fst is not None:
+            argName_to_node[arg_name].annotation = fst
 
     fst, additional_imports = build_annotation_fst(tl.return_type)
     imports |= additional_imports
@@ -93,7 +97,7 @@ def add_annotations(red, tl: TypesLog):
     return imports
 
 
-def enrich_pyfiles_by_type_hints(types_jsonl):
+def enrich_pyfiles_by_type_hints(types_jsonl, overwrite=True):
     type_logs = [TypesLog(**d) for d in data_io.read_jsonl(types_jsonl)]
     type_logs_grouped = groupby(type_logs, lambda x: x.func_module)
     for module, tls in type_logs_grouped:
@@ -108,6 +112,6 @@ def enrich_pyfiles_by_type_hints(types_jsonl):
             for imp in imports
             if imp not in existent_imports and module not in imp
         ]
-
+        py_file = py_file if overwrite else f"{py_file.replace('.py','')}_modified.py"
         with open(py_file, "w") as source_code:
             source_code.write(red.dumps())
