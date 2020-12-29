@@ -1,5 +1,6 @@
 import json
 from itertools import groupby
+from typing import Set, List
 
 from redbaron import RedBaron, NameNode, Node
 from util import data_io
@@ -29,8 +30,7 @@ def build_annotation_add_to_imports(qualname):
         module_path, ann_name = build_path_name(qualname)
         imports.add(f"from {module_path} import {ann_name}")
 
-    assert "'" not in ann_name
-    return ann_name,imports
+    return ann_name, imports
 
 
 def build_path_name(type_name):
@@ -48,12 +48,12 @@ blacklist = ["NoneType", "None", "type"]
 
 def build_annotation_fst(arg_type):
     if not any([b in arg_type for b in blacklist]):
-        type_ann,imports = build_annotation_add_to_imports(arg_type)
+        type_ann, imports = build_annotation_add_to_imports(arg_type)
         annotation_fst = Node.from_fst({"type": "name", "value": type_ann})
     else:
         annotation_fst = None
         imports = set()
-    return annotation_fst,imports
+    return annotation_fst, imports
 
 
 def get_existent_imports(red):
@@ -69,24 +69,29 @@ def get_existent_imports(red):
     return existent_imports
 
 
-def add_annotations(red,tl:TypesLog):
+arg_name_blacklist = ["self", "cls"]
+
+
+def add_annotations(red, tl: TypesLog):
     imports = set()
     def_node = red.find("def", name=tl.qualname.split(".")[-1])
     for arg in def_node.arguments:
         arg_name = arg.name.fst()["value"]
-        arg_type = tl.arg2type[arg_name]
-        fst, additional_imports = build_annotation_fst(arg_type)
-        imports.update(additional_imports)
+        if arg_name not in arg_name_blacklist:
+            arg_type = tl.arg2type[arg_name]
+            fst, additional_imports = build_annotation_fst(arg_type)
+            imports |= additional_imports
 
-        if fst is not None:
-            arg.annotation = fst
+            if fst is not None:
+                arg.annotation = fst
 
     fst, additional_imports = build_annotation_fst(tl.return_type)
-    imports.update(additional_imports)
+    imports |= additional_imports
     if fst is not None:
         def_node.return_annotation = fst
 
     return imports
+
 
 if __name__ == "__main__":
 
@@ -100,9 +105,13 @@ if __name__ == "__main__":
         imports = set()
 
         for tl in tls:
-            imports.update(add_annotations(red,tl))
+            imports |= add_annotations(red, tl)
 
-        [red.insert(1, imp) for imp in imports if imp not in existent_imports]
+        [
+            red.insert(1, imp)
+            for imp in imports
+            if imp not in existent_imports and module not in imp
+        ]
 
         with open("modified_code.py", "w") as source_code:
             source_code.write(red.dumps())
