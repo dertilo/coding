@@ -3,7 +3,7 @@ from itertools import groupby
 
 from redbaron import RedBaron, NameNode, Node
 from util import data_io
-from typeguard.util import TYPES_JSONL,TypesLog
+from typeguard.util import TYPES_JSONL, TypesLog
 
 
 def read_red(py_file: str):
@@ -14,14 +14,12 @@ def read_red(py_file: str):
 
 def add_type_annotations(py_file):
     red = read_red(py_file)
-    annotation_fst = {
-        "type": "name",
-        "value": "str"
-    }
+    annotation_fst = {"type": "name", "value": "str"}
     node = Node.from_fst(annotation_fst)
     red.find_all("def")[0].return_annotation = node
     red.find_all("def")[0].arguments[0].annotation = Node.from_fst(
-        {'type': 'name', 'value': 'DummyClass'})
+        {"type": "name", "value": "DummyClass"}
+    )
     red.insert(1, "from bla import dings")
     # formatting = [{'type': 'space', 'value': ' '}]
     # import_fs = {'type': 'from_import', 'first_formatting': formatting, 'value': [{'type': 'name', 'value': 'dummy_module'}], 'second_formatting': formatting, 'third_formatting': formatting, 'targets': [{'type': 'name_as_name', 'value': 'DummyClass', 'target': '', 'first_formatting': [], 'second_formatting': []}]}
@@ -29,11 +27,11 @@ def add_type_annotations(py_file):
         source_code.write(red.dumps())
 
 
-def build_annotation_add_to_imports(qualname,imports):
+def build_annotation_add_to_imports(qualname, imports):
     if "Tuple" in qualname:
         imports.add("from typing import Tuple")
         assert qualname[-1] == "]"
-        types = qualname.replace("Tuple[","")[:-1].split(",")
+        types = qualname.replace("Tuple[", "")[:-1].split(",")
         type_names = []
         for t in types:
             module_path, type_name = build_path_name(t)
@@ -58,10 +56,11 @@ def build_path_name(type_name):
         module_path = None
     return module_path, type_name
 
-blacklist = ["NoneType", "None","type"]
+
+blacklist = ["NoneType", "None", "type"]
 
 
-def build_annotation_fst(arg_type,imports):
+def build_annotation_fst(arg_type, imports):
     if not any([b in arg_type for b in blacklist]):
         type_ann = build_annotation_add_to_imports(arg_type, imports)
         annotation_fst = Node.from_fst({"type": "name", "value": type_ann})
@@ -86,7 +85,7 @@ def get_existent_imports(red):
 if __name__ == "__main__":
 
     type_logs = [TypesLog(**d) for d in data_io.read_jsonl(TYPES_JSONL)]
-    type_logs_grouped = groupby(type_logs,lambda x:x.func_module)
+    type_logs_grouped = groupby(type_logs, lambda x: x.func_module)
     for module, tls in type_logs_grouped:
         py_file = f"{module}.py"
         red = read_red(py_file)
