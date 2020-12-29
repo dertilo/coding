@@ -1,6 +1,6 @@
 import numpy
 
-from package.dummy_module import JustDistraction, DummyClass
+from dummy_package.dummy_module import JustDistraction, DummyClass
 
 
 def dummy_fun(x):
@@ -24,7 +24,3 @@ class DummyClass2:
     @staticmethod
     def dummy_static_method(x):
         return x
-
-# def dummy_fun_annotated(x:DummyClass)->str:
-#     x.foo = "dings"
-#     return x,"bar"
