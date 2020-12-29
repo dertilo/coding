@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class DummyClass:
+class AnotherDummyClass:
     foo:str = "bar"
     def bla(self,x):
         return x
