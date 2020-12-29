@@ -70,6 +70,19 @@ def build_annotation_fst(arg_type,imports):
     return annotation_fst
 
 
+def get_existent_imports(red):
+    existent_imports = set()
+    for r in red:
+        if r.type == "import":
+            existent_imports.add(f"import {r.name.fst()['value']}")
+        elif r.type == "from_import":
+            module_path = ".".join([x.fst()["value"] for x in r.value])
+            values = r.names()
+            for v in values:
+                existent_imports.add(f"from {module_path} import {v}")
+    return existent_imports
+
+
 if __name__ == "__main__":
 
     type_logs = [TypesLog(**d) for d in data_io.read_jsonl(TYPES_JSONL)]
@@ -77,7 +90,10 @@ if __name__ == "__main__":
     for module, tls in type_logs_grouped:
         py_file = f"{module}.py"
         red = read_red(py_file)
+        existent_imports = get_existent_imports(red)
+
         imports = set()
+
         for tl in tls:
             def_node = red.find("def", name=tl.qualname.split(".")[-1])
             for arg in def_node.arguments:
@@ -91,7 +107,7 @@ if __name__ == "__main__":
             if fst is not None:
                 def_node.return_annotation = fst
 
-        [red.insert(1, imp) for imp in imports]
+        [red.insert(1, imp) for imp in imports if imp not in existent_imports]
 
         with open("modified_code.py", "w") as source_code:
             source_code.write(red.dumps())
