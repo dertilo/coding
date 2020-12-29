@@ -93,19 +93,15 @@ def add_annotations(red, tl: TypesLog):
     return imports
 
 
-if __name__ == "__main__":
-
+def redbaron_add_typ_hints():
     type_logs = [TypesLog(**d) for d in data_io.read_jsonl(TYPES_JSONL)]
     type_logs_grouped = groupby(type_logs, lambda x: x.func_module)
     for module, tls in type_logs_grouped:
-        py_file = f"{module}.py"
+        py_file = f"{module.replace('.','/')}.py"
         red = read_red(py_file)
         existent_imports = get_existent_imports(red)
 
-        imports = set()
-
-        for tl in tls:
-            imports |= add_annotations(red, tl)
+        imports = {x for tl in tls for x in add_annotations(red, tl)}
 
         [
             red.insert(1, imp)
@@ -113,5 +109,10 @@ if __name__ == "__main__":
             if imp not in existent_imports and module not in imp
         ]
 
-        with open("modified_code.py", "w") as source_code:
+        with open(py_file, "w") as source_code:
             source_code.write(red.dumps())
+
+
+if __name__ == "__main__":
+
+    redbaron_add_typ_hints()
