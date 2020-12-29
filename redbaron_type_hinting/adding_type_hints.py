@@ -1,4 +1,5 @@
 import json
+from typing import Tuple
 from itertools import groupby
 from typing import Set, List
 
@@ -7,13 +8,13 @@ from util import data_io
 from typeguard.util import TypesLog
 
 
-def read_red(py_file: str):
+def read_red(py_file: str)->RedBaron:
     with open(py_file, "r") as source_code:
         red = RedBaron(source_code.read())
     return red
 
 
-def build_annotation_add_to_imports(qualname):
+def build_annotation_add_to_imports(qualname:str)->Tuple[str,set]:
     imports = set()
     if "Tuple" in qualname:
         imports.add("from typing import Tuple")
@@ -34,7 +35,7 @@ def build_annotation_add_to_imports(qualname):
     return ann_name, imports
 
 
-def build_path_name(type_name):
+def build_path_name(type_name:str)->Tuple[str,str]:
     if "." in type_name:
         s = type_name.split(".")
         module_path = ".".join(s[:-1])
@@ -47,7 +48,7 @@ def build_path_name(type_name):
 blacklist = ["NoneType", "None", "type"]
 
 
-def build_annotation_fst(arg_type):
+def build_annotation_fst(arg_type:str)->Tuple[NameNode,set]:
     if not any([b in arg_type for b in blacklist]):
         type_ann, imports = build_annotation_add_to_imports(arg_type)
         annotation_fst = Node.from_fst({"type": "name", "value": type_ann})
@@ -57,7 +58,7 @@ def build_annotation_fst(arg_type):
     return annotation_fst, imports
 
 
-def get_existent_imports(red):
+def get_existent_imports(red:RedBaron)->set:
     existent_imports = set()
     for r in red:
         if r.type == "import":
@@ -73,7 +74,7 @@ def get_existent_imports(red):
 arg_name_blacklist = ["self", "cls"]
 
 
-def add_annotations(red, tl: TypesLog):
+def add_annotations(red:RedBaron, tl: TypesLog)->set:
     imports = set()
     def_node = red.find("def", name=tl.qualname.split(".")[-1])
     argName_to_node = {arg.name.fst()["value"]: arg for arg in def_node.arguments}
@@ -97,7 +98,7 @@ def add_annotations(red, tl: TypesLog):
     return imports
 
 
-def enrich_pyfiles_by_type_hints(types_jsonl, overwrite=True):
+def enrich_pyfiles_by_type_hints(types_jsonl:str, overwrite=True):
     type_logs = [TypesLog(**d) for d in data_io.read_jsonl(types_jsonl)]
     type_logs_grouped = groupby(type_logs, lambda x: x.func_module)
     for module, tls in type_logs_grouped:
