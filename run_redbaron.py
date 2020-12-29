@@ -31,6 +31,7 @@ def add_type_annotations(py_file):
 
 def build_annotation_add_to_imports(qualname,imports):
     if "Tuple" in qualname:
+        imports.add("from typing import Tuple")
         assert qualname[-1] == "]"
         types = qualname.replace("Tuple[","")[:-1].split(",")
         type_names = []
@@ -39,7 +40,7 @@ def build_annotation_add_to_imports(qualname,imports):
             type_names.append(type_name)
             if module_path is not None:
                 imports.add(f"from {module_path} import {type_name}")
-        ann_name = f"Tuple{type_names}"
+        ann_name = f"Tuple[{','.join(type_names)}]"
     else:
         module_path, ann_name = build_path_name(qualname)
         imports.add(f"from {module_path} import {ann_name}")
@@ -51,13 +52,13 @@ def build_annotation_add_to_imports(qualname,imports):
 def build_path_name(type_name):
     if "." in type_name:
         s = type_name.split(".")
-        module_path = ".".join(s[:1])
+        module_path = ".".join(s[:-1])
         type_name = s[-1]
     else:
         module_path = None
     return module_path, type_name
 
-blacklist = ["NoneType", "None"]
+blacklist = ["NoneType", "None","type"]
 
 
 def build_annotation_fst(arg_type,imports):

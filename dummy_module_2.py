@@ -1,6 +1,6 @@
 import numpy
 
-from package.dummy_module import DummyClass
+from package.dummy_module import JustDistraction, DummyClass
 
 
 def dummy_fun(x):
