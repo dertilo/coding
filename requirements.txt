@@ -1,2 +1,3 @@
 git+https://github.com/dertilo/typeguard.git@tilo
 redbaron
+util@git+https://github.com/dertilo/util.git#egg=util
