@@ -12,22 +12,8 @@ def read_red(py_file: str):
     return red
 
 
-def add_type_annotations(py_file):
-    red = read_red(py_file)
-    annotation_fst = {"type": "name", "value": "str"}
-    node = Node.from_fst(annotation_fst)
-    red.find_all("def")[0].return_annotation = node
-    red.find_all("def")[0].arguments[0].annotation = Node.from_fst(
-        {"type": "name", "value": "DummyClass"}
-    )
-    red.insert(1, "from bla import dings")
-    # formatting = [{'type': 'space', 'value': ' '}]
-    # import_fs = {'type': 'from_import', 'first_formatting': formatting, 'value': [{'type': 'name', 'value': 'dummy_module'}], 'second_formatting': formatting, 'third_formatting': formatting, 'targets': [{'type': 'name_as_name', 'value': 'DummyClass', 'target': '', 'first_formatting': [], 'second_formatting': []}]}
-    with open("modified_code.py", "w") as source_code:
-        source_code.write(red.dumps())
-
-
-def build_annotation_add_to_imports(qualname, imports):
+def build_annotation_add_to_imports(qualname):
+    imports = set()
     if "Tuple" in qualname:
         imports.add("from typing import Tuple")
         assert qualname[-1] == "]"
@@ -44,7 +30,7 @@ def build_annotation_add_to_imports(qualname, imports):
         imports.add(f"from {module_path} import {ann_name}")
 
     assert "'" not in ann_name
-    return ann_name
+    return ann_name,imports
 
 
 def build_path_name(type_name):
@@ -60,13 +46,14 @@ def build_path_name(type_name):
 blacklist = ["NoneType", "None", "type"]
 
 
-def build_annotation_fst(arg_type, imports):
+def build_annotation_fst(arg_type):
     if not any([b in arg_type for b in blacklist]):
-        type_ann = build_annotation_add_to_imports(arg_type, imports)
+        type_ann,imports = build_annotation_add_to_imports(arg_type)
         annotation_fst = Node.from_fst({"type": "name", "value": type_ann})
     else:
         annotation_fst = None
-    return annotation_fst
+        imports = set()
+    return annotation_fst,imports
 
 
 def get_existent_imports(red):
@@ -82,6 +69,25 @@ def get_existent_imports(red):
     return existent_imports
 
 
+def add_annotations(red,tl:TypesLog):
+    imports = set()
+    def_node = red.find("def", name=tl.qualname.split(".")[-1])
+    for arg in def_node.arguments:
+        arg_name = arg.name.fst()["value"]
+        arg_type = tl.arg2type[arg_name]
+        fst, additional_imports = build_annotation_fst(arg_type)
+        imports.update(additional_imports)
+
+        if fst is not None:
+            arg.annotation = fst
+
+    fst, additional_imports = build_annotation_fst(tl.return_type)
+    imports.update(additional_imports)
+    if fst is not None:
+        def_node.return_annotation = fst
+
+    return imports
+
 if __name__ == "__main__":
 
     type_logs = [TypesLog(**d) for d in data_io.read_jsonl(TYPES_JSONL)]
@@ -94,17 +100,7 @@ if __name__ == "__main__":
         imports = set()
 
         for tl in tls:
-            def_node = red.find("def", name=tl.qualname.split(".")[-1])
-            for arg in def_node.arguments:
-                arg_name = arg.name.fst()["value"]
-                arg_type = tl.arg2type[arg_name]
-                fst = build_annotation_fst(arg_type, imports)
-                if fst is not None:
-                    arg.annotation = fst
-
-            fst = build_annotation_fst(tl.return_type, imports)
-            if fst is not None:
-                def_node.return_annotation = fst
+            imports.update(add_annotations(red,tl))
 
         [red.insert(1, imp) for imp in imports if imp not in existent_imports]
 
