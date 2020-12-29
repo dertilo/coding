@@ -2,18 +2,15 @@ import os
 
 import numpy
 
-from dummy_module_2 import DummyClass2, dummy_fun
 from dummy_package.another_dummy_module import AnotherDummyClass
 from dummy_package.dummy_module import DummyClass
-from run_redbaron import redbaron_add_typ_hints
+from dummy_package.dummy_module_2 import DummyClass2, dummy_fun
+from redbaron_type_hinting.adding_type_hints import enrich_pyfiles_by_type_hints
 
 
-def test_type_hinting():
-    TYPES_JSONL = "/tmp/types_1.jsonl"
+def test_type_hinting(tmp_path):
+    TYPES_JSONL = str(tmp_path / "types.jsonl")
     os.environ["TYPES_JSONL"] = TYPES_JSONL
-
-    if os.path.isfile(TYPES_JSONL):
-        os.remove(TYPES_JSONL)
 
     x = DummyClass()
     x.bla(numpy.zeros((1,3)))
@@ -30,5 +27,6 @@ def test_type_hinting():
     x = AnotherDummyClass()
     x.bla(numpy.zeros((1,3)))
 
-    redbaron_add_typ_hints(TYPES_JSONL)
+    enrich_pyfiles_by_type_hints(TYPES_JSONL)
+
 
