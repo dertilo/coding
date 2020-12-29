@@ -93,8 +93,8 @@ def add_annotations(red, tl: TypesLog):
     return imports
 
 
-def redbaron_add_typ_hints():
-    type_logs = [TypesLog(**d) for d in data_io.read_jsonl(TYPES_JSONL)]
+def redbaron_add_typ_hints(types_jsonl):
+    type_logs = [TypesLog(**d) for d in data_io.read_jsonl(types_jsonl)]
     type_logs_grouped = groupby(type_logs, lambda x: x.func_module)
     for module, tls in type_logs_grouped:
         py_file = f"{module.replace('.','/')}.py"
