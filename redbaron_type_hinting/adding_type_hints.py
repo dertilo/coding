@@ -15,6 +15,9 @@ def read_red(py_file: str) -> RedBaron:
     return red
 
 
+typing_list = ["list", "dict", "tuple", "generator"]
+
+
 def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
     imports = set()
     if "Tuple" in qualname:
@@ -32,6 +35,9 @@ def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
         module_path, ann_name = build_path_name(qualname)
         if module_path is not None:
             imports.add(f"from {module_path} import {ann_name}")
+        elif ann_name in typing_list:
+            ann_name = ann_name.capitalize()
+            imports.add(f"from typing import {ann_name}")
 
     return ann_name, imports
 
