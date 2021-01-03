@@ -1,6 +1,7 @@
 import json
+import re
 from pprint import pprint
-from typing import Tuple
+from typing import Tuple, Union, Dict
 from itertools import groupby
 from typing import Set, List
 
@@ -18,27 +19,48 @@ def read_red(py_file: str) -> RedBaron:
 typing_list = ["list", "dict", "tuple", "generator"]
 
 
+
 def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
     imports = set()
-    if "Tuple" in qualname:
-        imports.add("from typing import Tuple")
-        assert qualname[-1] == "]"
-        types = qualname.replace("Tuple[", "")[:-1].split(",")
-        type_names = []
-        for t in types:
-            module_path, type_name = build_path_name(t)
-            type_names.append(type_name)
-            if module_path is not None:
-                imports.add(f"from {module_path} import {type_name}")
-        ann_name = f"Tuple[{','.join(type_names)}]"
-    else:
-        module_path, ann_name = build_path_name(qualname)
-        if module_path is not None:
-            imports.add(f"from {module_path} import {ann_name}")
-        elif ann_name in typing_list:
-            ann_name = ann_name.capitalize()
-            imports.add(f"from typing import {ann_name}")
 
+    def append_node(nodes, node_name, children: str = None):
+        if len(node_name) > 0:
+            module_path, ann_name = build_path_name(node_name)
+            if module_path is not None:
+                imports.add(f"from {module_path} import {ann_name}")
+            elif ann_name.lower() in typing_list:
+                ann_name = ann_name.capitalize()
+                imports.add(f"from typing import {ann_name}")
+
+            if children is not None:
+                nodes.append(f"{ann_name}[{children}]")
+            else:
+                nodes.append(ann_name)
+
+
+    def parse_tree(seq: List[str]) -> str:
+        nodes: List[Union[Dict, str]] = []
+        node = ""
+
+        while len(seq) > 0:
+            x = seq.pop(0)
+            if x == "[":
+                append_node(nodes, node, children=parse_tree(seq))
+                node = ""
+            elif x == "]":
+                append_node(nodes, node)
+                return ",".join(nodes)
+            elif x == ",":
+                append_node(nodes, node)
+                node = ""
+            else:
+                node += x
+
+        append_node(nodes, node)
+        return ",".join(nodes)
+
+
+    ann_name = parse_tree(list(qualname))
     return ann_name, imports
 
 
