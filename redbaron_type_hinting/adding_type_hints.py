@@ -105,20 +105,26 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     return imports
 
 
-def enrich_pyfiles_by_type_hints(types_jsonl: str, overwrite=True):
+def enrich_pyfiles_by_type_hints(types_jsonl: str, overwrite=True, verbose=False):
     type_logs = list(set([TypesLog(**d) for d in data_io.read_jsonl(types_jsonl)]))
     print(f"got {len(type_logs)} type-logs")
     type_logs_grouped = {
-        t: list(g) for t, g in groupby(type_logs, lambda x: x.func_module)
+        t: list(g)
+        for t, g in groupby(
+            sorted(type_logs, key=lambda x: x.func_module), lambda x: x.func_module
+        )
     }
+
     for module, tls in type_logs_grouped.items():
         py_file = f"{module.replace('.','/')}.py"
-        print(py_file)
+        if verbose:
+            print(py_file)
+            print(tls)
         red = read_red(py_file)
         existent_imports = get_existent_imports(red)
 
-        imports = {x for tl in tls for x in add_annotations(red, tl)}
-
+        imports = {imp for type_log in tls for imp in add_annotations(red, type_log)}
+        print(f"imports: {imports}")
         [
             red.insert(1, imp)
             for imp in imports
