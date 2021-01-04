@@ -137,11 +137,23 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
 def build_node(type_ann):
     return Node.from_fst({"type": "name", "value": type_ann})
 
+def just_try(func):
+    def inner_function(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception:
+            return None
+    return inner_function
+
 
 def remove_unwanted_annotations(red):
     blacklist = ["Any", "None", "type"]
 
-    def_node = red.find_all("def")
+    for node in red.find_all("def"):
+        if just_try(lambda x:x.annotation.dumps())(node) in blacklist:
+            node.annotation = ""
+        elif just_try(lambda x:x.return_annotation.dumps())(node) in blacklist:
+            node.return_annotation=""
 
 
 def enrich_pyfiles_by_type_hints(types_jsonl: str, overwrite=True, verbose=False):
