@@ -16,8 +16,7 @@ def read_red(py_file: str) -> RedBaron:
     return red
 
 
-typing_list = ["list", "dict", "tuple", "generator"]
-
+typing_list = ["List", "Dict", "Tuple", "Generator", "Any"]
 
 
 def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
@@ -28,7 +27,7 @@ def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
             module_path, ann_name = build_path_name(node_name)
             if module_path is not None:
                 imports.add(f"from {module_path} import {ann_name}")
-            elif ann_name.lower() in typing_list:
+            elif ann_name.capitalize() in typing_list:
                 ann_name = ann_name.capitalize()
                 imports.add(f"from typing import {ann_name}")
 
@@ -36,7 +35,6 @@ def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
                 nodes.append(f"{ann_name}[{children}]")
             else:
                 nodes.append(ann_name)
-
 
     def parse_tree(seq: List[str]) -> str:
         nodes: List[Union[Dict, str]] = []
@@ -59,7 +57,6 @@ def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
         append_node(nodes, node)
         return ",".join(nodes)
 
-
     ann_name = parse_tree(list(qualname))
     return ann_name, imports
 
@@ -77,14 +74,13 @@ def build_path_name(type_name: str) -> Tuple[str, str]:
 blacklist = ["NoneType", "None", "type"]
 
 
-def build_annotation_fst(arg_type: str) -> Tuple[NameNode, set]:
+def build_annotation(arg_type: str):
     if not any([b in arg_type for b in blacklist]):
         type_ann, imports = build_annotation_add_to_imports(arg_type)
-        annotation_fst = Node.from_fst({"type": "name", "value": type_ann})
     else:
-        annotation_fst = None
+        type_ann = None
         imports = set()
-    return annotation_fst, imports
+    return type_ann, imports
 
 
 def get_existent_imports(red: RedBaron) -> set:
@@ -103,6 +99,16 @@ def get_existent_imports(red: RedBaron) -> set:
 arg_name_blacklist = ["self", "cls"]
 
 
+def build_ann_node(imports, additional_imports, annotation: NameNode, new_annotation):
+    imports |= additional_imports
+
+    if annotation is not None:
+        ann_node = build_node(new_annotation) # TODO
+    else:
+        ann_node = build_node(new_annotation)
+    return ann_node
+
+
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     imports = set()
     def_node = red.find("def", name=tl.qualname.split(".")[-1])
@@ -113,18 +119,24 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
 
     for arg_name, arg_type in logged_names_types:
         arg_type = tl.arg2type[arg_name]
-        fst, additional_imports = build_annotation_fst(arg_type)
-        imports |= additional_imports
+        ann, additional_imports = build_annotation(arg_type)
+        if ann is not None:
+            old_ann_node = argName_to_node[arg_name].annotation
+            m_ann = build_ann_node(imports, additional_imports, old_ann_node, ann)
+            argName_to_node[arg_name].annotation = m_ann
 
-        if fst is not None:
-            argName_to_node[arg_name].annotation = fst
-
-    fst, additional_imports = build_annotation_fst(tl.return_type)
-    imports |= additional_imports
-    if fst is not None:
-        def_node.return_annotation = fst
+    ann, additional_imports = build_annotation(tl.return_type)
+    if ann is not None:
+        m_ann = build_ann_node(
+            imports, additional_imports, def_node.return_annotation, ann
+        )
+        def_node.return_annotation = m_ann
 
     return imports
+
+
+def build_node(type_ann):
+    return Node.from_fst({"type": "name", "value": type_ann})
 
 
 def enrich_pyfiles_by_type_hints(types_jsonl: str, overwrite=True, verbose=False):
