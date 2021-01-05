@@ -11,7 +11,8 @@ os.environ["TYPES_JSONL"] = TYPES_JSONL
 install_import_hook('dummy_package')
 from dummy_package.dummy_module import DummyClass
 from dummy_package.another_dummy_module import AnotherDummyClass
-from dummy_package.dummy_module_2 import DummyClass2, dummy_fun, generator
+from dummy_package.dummy_module_2 import DummyClass2, dummy_fun, generator, \
+    build_generator
 
 if __name__ == '__main__':
 
@@ -32,5 +33,6 @@ if __name__ == '__main__':
 
     x = AnotherDummyClass()
     x = list(generator((DummyClass() for _ in range(3))))
+    x = list(build_generator((DummyClass() for _ in range(3))))
 
     data_io.write_jsonl("types.jsonl",[asdict(x) for x in TYPEGUARD_CACHE.values()])

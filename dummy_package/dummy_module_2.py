@@ -26,5 +26,7 @@ class DummyClass2:
         return x
 
 def generator(g):
-    for i in g:
-        yield DummyClass2()
+    yield from (DummyClass2() for i in g)
+
+def build_generator(g):
+    return (DummyClass2() for i in g)
