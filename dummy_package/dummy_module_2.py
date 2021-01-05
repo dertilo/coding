@@ -24,3 +24,7 @@ class DummyClass2:
     @staticmethod
     def dummy_static_method(x):
         return x
+
+def generator(g):
+    for i in g:
+        yield DummyClass2()

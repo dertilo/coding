@@ -1,13 +1,9 @@
-import json
-import re
-from pprint import pprint
-from typing import Tuple, Union, Dict
 from itertools import groupby
-from typing import Set, List
+from typing import Tuple, Union, Dict, List
 
 from redbaron import RedBaron, NameNode, Node
-from util import data_io
 from typeguard.util import TypesLog
+from util import data_io
 
 
 def read_red(py_file: str) -> RedBaron:
@@ -112,26 +108,32 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     imports = set()
     def_node = red.find("def", name=tl.qualname.split(".")[-1])
     argName_to_node = {arg.name.fst()["value"]: arg for arg in def_node.arguments}
-    logged_names_types = (
-        (n, t) for n, t in tl.arg2type.items() if n not in arg_name_blacklist
-    )
 
+    for call_log in tl.call_logs.values():
+
+        process_call_log(argName_to_node, call_log, def_node, imports)
+
+    return imports
+
+
+def process_call_log(argName_to_node, call_log, def_node, imports):
+    logged_names_types = (
+        (n, t)
+        for n, t in call_log.arg2type.items() if n not in arg_name_blacklist
+    )
     for arg_name, arg_type in logged_names_types:
-        arg_type = tl.arg2type[arg_name]
         ann, additional_imports = build_annotation_add_to_imports(arg_type)
         if ann is not None:
-            old_ann_node = argName_to_node[arg_name].annotation
+            arg_node = argName_to_node[arg_name]
+            old_ann_node = arg_node.annotation
             m_ann = build_ann_node(imports, additional_imports, old_ann_node, ann)
-            argName_to_node[arg_name].annotation = m_ann
-
-    ann, additional_imports = build_annotation_add_to_imports(tl.return_type)
+            arg_node.annotation = m_ann
+    ann, additional_imports = build_annotation_add_to_imports(call_log.return_type)
     if ann is not None:
         m_ann = build_ann_node(
             imports, additional_imports, def_node.return_annotation, ann
         )
         def_node.return_annotation = m_ann
-
-    return imports
 
 
 def build_node(type_ann):
@@ -157,7 +159,7 @@ def remove_unwanted_annotations(red):
 
 
 def enrich_pyfiles_by_type_hints(types_jsonl: str, overwrite=True, verbose=False):
-    type_logs = list(set([TypesLog(**d) for d in data_io.read_jsonl(types_jsonl)]))
+    type_logs = [TypesLog.from_dict(d) for d in data_io.read_jsonl(types_jsonl)]
     print(f"got {len(type_logs)} type-logs")
     type_logs_grouped = {
         t: list(g)
