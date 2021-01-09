@@ -100,30 +100,28 @@ def is_childclass(mother: str, child: str, module_s: str):
 def build_ann_node(
     imports, additional_imports, annotation: Optional[NameNode], new_annotation: str
 ):
-
-    ann_node = build_node(new_annotation)
-
+    # TODO(tilo) fuse with build_annotation_add_to_imports
     if annotation is not None:
         normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
-        new_annotation_s = normalize(ann_node)
-
-        annotation_s = normalize(annotation)
+        old_annotation = normalize(annotation)
 
         module_s = next(iter(additional_imports)).strip("from ").split(" import")[0]
         if is_childclass(
-            mother=annotation_s, child=new_annotation_s, module_s=module_s
+            mother=old_annotation, child=new_annotation, module_s=module_s
         ):
-            ann_node = build_node(annotation_s)
+            new_annotation = old_annotation
         else:
             imports |= additional_imports
 
-            if "Union" in annotation_s:
-                annotation_s.replace("]", f",{new_annotation}]")
+            if "Union" in old_annotation:
+                old_annotation.replace("]", f",{new_annotation}]")
             else:
                 imports.add(f"from typing import Union")
-                ann_node = build_node(f"Union[{annotation_s},{new_annotation}]")
+                new_annotation = f"Union[{old_annotation},{new_annotation}]"
+    else:
+        imports |= additional_imports
 
-    return ann_node
+    return build_node(new_annotation)
 
 
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
