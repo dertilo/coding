@@ -1,7 +1,0 @@
-{"func_module": "dummy_package.dummy_module", "qualname": "DummyClass.bla", "arg2type": {"self": "dummy_package.dummy_module.DummyClass", "x": "numpy.ndarray"}, "return_type": "numpy.ndarray"}
-{"func_module": "dummy_package.dummy_module_2", "qualname": "DummyClass2.__init__", "arg2type": {"self": "dummy_package.dummy_module_2.DummyClass2"}, "return_type": "NoneType"}
-{"func_module": "dummy_package.dummy_module_2", "qualname": "dummy_fun", "arg2type": {"x": "dummy_package.dummy_module.DummyClass"}, "return_type": "Tuple[dummy_package.dummy_module.DummyClass,str]"}
-{"func_module": "dummy_package.dummy_module_2", "qualname": "DummyClass2.dummy_method", "arg2type": {"self": "dummy_package.dummy_module_2.DummyClass2", "x": "dummy_package.dummy_module.DummyClass"}, "return_type": "dummy_package.dummy_module.DummyClass"}
-{"func_module": "dummy_package.dummy_module_2", "qualname": "DummyClass2.dummy_class_method", "arg2type": {"cls": "type", "x": "dummy_package.dummy_module.DummyClass"}, "return_type": "dummy_package.dummy_module.DummyClass"}
-{"func_module": "dummy_package.dummy_module_2", "qualname": "DummyClass2.dummy_static_method", "arg2type": {"x": "dummy_package.dummy_module.DummyClass"}, "return_type": "dummy_package.dummy_module.DummyClass"}
-{"func_module": "dummy_package.another_dummy_module", "qualname": "AnotherDummyClass.bla", "arg2type": {"self": "dummy_package.another_dummy_module.AnotherDummyClass", "x": "numpy.ndarray"}, "return_type": "numpy.ndarray"}

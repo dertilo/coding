@@ -158,8 +158,7 @@ def remove_unwanted_annotations(red):
             node.return_annotation=""
 
 
-def enrich_pyfiles_by_type_hints(types_jsonl: str, overwrite=True, verbose=False):
-    type_logs = [TypesLog.from_dict(d) for d in data_io.read_jsonl(types_jsonl)]
+def enrich_pyfiles_by_type_hints(type_logs: List[TypesLog], overwrite=True, verbose=False):
     print(f"got {len(type_logs)} type-logs")
     type_logs_grouped = {
         t: list(g)
