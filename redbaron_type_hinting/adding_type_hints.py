@@ -3,8 +3,7 @@ from itertools import groupby
 from typing import Tuple, Union, Dict, List, Set, Optional
 
 from redbaron import RedBaron, NameNode, Node
-from typeguard.util import TypesLog
-from util import data_io
+from typeguard.util import TypesLog, CallLog
 
 
 def read_red(py_file: str) -> RedBaron:
@@ -127,32 +126,40 @@ def build_ann_node(
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     imports = set()
     def_node = red.find("def", name=tl.qualname.split(".")[-1])
-    argName_to_node = {arg.name.fst()["value"]: arg for arg in def_node.arguments}
+    argName_to_node = {
+        arg.name.fst()["value"]: (arg, "annotation") for arg in def_node.arguments
+    }
+    argName_to_node["return"] = (def_node, "return_annotation")
 
     for call_log in tl.call_logs.values():
-
-        process_call_log(argName_to_node, call_log, def_node, imports)
+        process_call_log(argName_to_node, call_log, imports)
 
     return imports
 
 
-def process_call_log(argName_to_node, call_log, def_node, imports):
+def process_call_log(
+    argName_to_node: Dict[str, Tuple[NameNode, str]],
+    call_log: CallLog,
+    imports: Set[str],
+):
     logged_names_types = (
         (n, t) for n, t in call_log.arg2type.items() if n not in arg_name_blacklist
     )
     for arg_name, arg_type in logged_names_types:
         ann, additional_imports = build_annotation_add_to_imports(arg_type)
         if ann is not None:
-            arg_node = argName_to_node[arg_name]
-            old_ann_node = arg_node.annotation
-            m_ann = build_ann_node(imports, additional_imports, old_ann_node, ann)
-            arg_node.annotation = m_ann
+            arg_node, attr_name = argName_to_node[arg_name]
+            m_ann = build_ann_node(
+                imports, additional_imports, getattr(arg_node, attr_name), ann
+            )
+            setattr(arg_node, attr_name, m_ann)
     ann, additional_imports = build_annotation_add_to_imports(call_log.return_type)
     if ann is not None:
+        arg_node, attr_name = argName_to_node["return"]
         m_ann = build_ann_node(
-            imports, additional_imports, def_node.return_annotation, ann
+            imports, additional_imports, getattr(arg_node, attr_name), ann
         )
-        def_node.return_annotation = m_ann
+        setattr(arg_node, attr_name, m_ann)
 
 
 def build_node(type_ann: str):
