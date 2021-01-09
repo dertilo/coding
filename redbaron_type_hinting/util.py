@@ -1,4 +1,4 @@
-from redbaron import Node
+from redbaron import Node, RedBaron
 
 
 def build_node(type_ann: str):
@@ -14,3 +14,9 @@ def just_try(func):
             return None
 
     return inner_function
+
+
+def read_red(py_file: str) -> RedBaron:
+    with open(py_file, "r") as source_code:
+        red = RedBaron(source_code.read())
+    return red

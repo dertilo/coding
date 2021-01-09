@@ -5,14 +5,7 @@ from typing import Tuple, Union, Dict, List, Set, Optional
 from redbaron import RedBaron, NameNode
 from typeguard.util import TypesLog, CallLog
 
-from redbaron_type_hinting.util import build_node, just_try
-
-
-def read_red(py_file: str) -> RedBaron:
-    with open(py_file, "r") as source_code:
-        red = RedBaron(source_code.read())
-    return red
-
+from redbaron_type_hinting.util import build_node, just_try, read_red
 
 typing_list = ["List", "Dict", "Tuple", "Generator", "Any"]
 replace_map = {"NoneType": "None"}
