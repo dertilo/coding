@@ -1,5 +1,6 @@
+import importlib
 from itertools import groupby
-from typing import Tuple, Union, Dict, List
+from typing import Tuple, Union, Dict, List, Set, Optional
 
 from redbaron import RedBaron, NameNode, Node
 from typeguard.util import TypesLog
@@ -86,19 +87,41 @@ def get_existent_imports(red: RedBaron) -> set:
 arg_name_blacklist = ["self", "cls"]
 
 
-def build_ann_node(imports, additional_imports, annotation: NameNode, new_annotation):
-    imports |= additional_imports
+def is_childclass(mother: str, child: str, module_s: str):
+    m = importlib.import_module(module_s)
+    if hasattr(m, mother) and issubclass(getattr(m, child), getattr(m, mother)):
+        is_sub = True
+    else:
+        is_sub = False
+
+    return is_sub
+
+
+def build_ann_node(
+    imports, additional_imports, annotation: Optional[NameNode], new_annotation: str
+):
 
     ann_node = build_node(new_annotation)
-    normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
-    annotation_s = normalize(annotation)
-    if annotation is not None and annotation_s != normalize(ann_node):
 
-        if "Union" in annotation_s:
-            annotation_s.replace("]", f",{new_annotation}]")
+    if annotation is not None:
+        normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
+        new_annotation_s = normalize(ann_node)
+
+        annotation_s = normalize(annotation)
+
+        module_s = next(iter(additional_imports)).strip("from ").split(" import")[0]
+        if is_childclass(
+            mother=annotation_s, child=new_annotation_s, module_s=module_s
+        ):
+            ann_node = build_node(annotation_s)
         else:
-            imports.add(f"from typing import Union")
-            ann_node = build_node(f"Union[{annotation_s},{new_annotation}]")
+            imports |= additional_imports
+
+            if "Union" in annotation_s:
+                annotation_s.replace("]", f",{new_annotation}]")
+            else:
+                imports.add(f"from typing import Union")
+                ann_node = build_node(f"Union[{annotation_s},{new_annotation}]")
 
     return ann_node
 
@@ -134,7 +157,7 @@ def process_call_log(argName_to_node, call_log, def_node, imports):
         def_node.return_annotation = m_ann
 
 
-def build_node(type_ann):
+def build_node(type_ann: str):
     return Node.from_fst({"type": "name", "value": type_ann})
 
 

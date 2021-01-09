@@ -13,5 +13,6 @@ from test_type_hinting import main_dummy
 if __name__ == '__main__':
 
     main_dummy()
-    pprint([asdict(x) for x in TYPEGUARD_CACHE.values()])
-    # data_io.write_jsonl("types.jsonl",)
+    type_logs = [asdict(x) for x in TYPEGUARD_CACHE.values()]
+    pprint(type_logs)
+    data_io.write_jsonl("types.jsonl",type_logs)
