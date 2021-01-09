@@ -99,7 +99,6 @@ def build_ann_node(imports, additional_imports, annotation: NameNode, new_annota
         else:
             imports.add(f"from typing import Union")
             ann_node = build_node(f"Union[{annotation_s},{new_annotation}]")
-            print()
 
     return ann_node
 

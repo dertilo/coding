@@ -2,6 +2,11 @@ import numpy
 
 from dummy_package.dummy_module import JustDistraction, DummyClass
 
+class DummyChild(DummyClass):
+
+    def bla(self, x):
+        return x,x
+
 
 def dummy_fun(x):
     x.foo = "dings"
