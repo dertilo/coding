@@ -26,7 +26,8 @@ def run_dummy():
     x.bla(numpy.zeros((1, 3)))
     c = DummyClass2()
     y = dummy_fun(x)
-    y = dummy_fun_2(AudioConfig())
+    y = dummy_fun_2(AudioConfig(bitrate=4))
+    y = dummy_fun_2(AudioConfig(bitrate=None))
     c.foo = x
     bla = c.dummy_method(x)
     bla = c.dummy_class_method(x)

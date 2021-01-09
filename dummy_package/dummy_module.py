@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 @dataclass
@@ -13,5 +13,5 @@ class JustDistraction:
 
 class AudioConfig(NamedTuple):
     format: str = "wav"
-    bitrate: int = -1
+    bitrate: Optional[int] = None
     min_dur_secs:float = 0.5 # seconds
