@@ -2,8 +2,10 @@ import importlib
 from itertools import groupby
 from typing import Tuple, Union, Dict, List, Set, Optional
 
-from redbaron import RedBaron, NameNode, Node
+from redbaron import RedBaron, NameNode
 from typeguard.util import TypesLog, CallLog
+
+from redbaron_type_hinting.util import build_node, just_try
 
 
 def read_red(py_file: str) -> RedBaron:
@@ -95,6 +97,9 @@ def is_childclass(mother: str, child: str, module_s: str):
 
     return is_sub
 
+@just_try
+def get_module(additional_imports:Set[str]):
+    return next(iter(additional_imports)).strip("from ").split(" import")[0]
 
 def build_ann_node(
     imports, additional_imports, annotation: Optional[NameNode], new_annotation: str
@@ -104,7 +109,7 @@ def build_ann_node(
         normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
         old_annotation = normalize(annotation)
 
-        module_s = next(iter(additional_imports)).strip("from ").split(" import")[0]
+        module_s = get_module(additional_imports)
         if is_childclass(
             mother=old_annotation, child=new_annotation, module_s=module_s
         ):
@@ -155,20 +160,6 @@ def process_call_log(
                 imports, additional_imports, getattr(arg_node, attr_name), ann
             )
             setattr(arg_node, attr_name, m_ann)
-
-
-def build_node(type_ann: str):
-    return Node.from_fst({"type": "name", "value": type_ann})
-
-
-def just_try(func):
-    def inner_function(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception:
-            return None
-
-    return inner_function
 
 
 def remove_unwanted_annotations(red):
