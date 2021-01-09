@@ -9,10 +9,10 @@ from util import data_io
 TYPES_JSONL = "dummy_types.jsonl"
 os.environ["TYPES_JSONL"] = TYPES_JSONL
 install_import_hook('dummy_package')
-from dummy_package.dummy_module import DummyClass
+from dummy_package.dummy_module import DummyClass, AudioConfig
 from dummy_package.another_dummy_module import AnotherDummyClass
 from dummy_package.dummy_module_2 import DummyClass2, dummy_fun, generator, \
-    build_generator
+    build_generator, dummy_fun_2
 
 if __name__ == '__main__':
 
@@ -24,6 +24,9 @@ if __name__ == '__main__':
     x.bla(numpy.zeros((1,3)))
     c = DummyClass2()
     y = dummy_fun(x)
+
+    y = dummy_fun_2(AudioConfig())
+
 
     c.foo = x
     bla = c.dummy_method(x)

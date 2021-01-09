@@ -7,6 +7,9 @@ def dummy_fun(x):
     x.foo = "dings"
     return x,"bar"
 
+def dummy_fun_2(x):
+    return x,"bar"
+
 class DummyClass2:
 
     def __init__(self) -> None:
