@@ -1,5 +1,10 @@
 from dataclasses import dataclass
 
+@dataclass
+class JustDistraction:
+    foo:str = "bar"
+    def bla(self,x):
+        return x
 
 @dataclass
 class AnotherDummyClass:
@@ -7,5 +12,3 @@ class AnotherDummyClass:
     def bla(self,x):
         return x
 
-class JustDistraction:
-    pass
