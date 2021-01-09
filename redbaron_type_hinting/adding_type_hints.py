@@ -142,9 +142,11 @@ def process_call_log(
     call_log: CallLog,
     imports: Set[str],
 ):
-    logged_names_types = (
+    logged_names_types = [
         (n, t) for n, t in call_log.arg2type.items() if n not in arg_name_blacklist
-    )
+    ]
+    logged_names_types += [("return", call_log.return_type)]
+
     for arg_name, arg_type in logged_names_types:
         ann, additional_imports = build_annotation_add_to_imports(arg_type)
         if ann is not None:
@@ -153,13 +155,6 @@ def process_call_log(
                 imports, additional_imports, getattr(arg_node, attr_name), ann
             )
             setattr(arg_node, attr_name, m_ann)
-    ann, additional_imports = build_annotation_add_to_imports(call_log.return_type)
-    if ann is not None:
-        arg_node, attr_name = argName_to_node["return"]
-        m_ann = build_ann_node(
-            imports, additional_imports, getattr(arg_node, attr_name), ann
-        )
-        setattr(arg_node, attr_name, m_ann)
 
 
 def build_node(type_ann: str):
