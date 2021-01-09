@@ -31,9 +31,9 @@ def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
             ann_name = replace_map.get(ann_name, ann_name)
 
             if children is not None:
-                nodes.append(f"{ann_name}[{children}]")
-            else:
-                nodes.append(ann_name)
+                ann_name = f"{ann_name}[{children}]"
+
+            nodes.append(ann_name)
 
     def parse_tree(seq: List[str]) -> str:
         nodes: List[Union[Dict, str]] = []
