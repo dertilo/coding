@@ -118,8 +118,7 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
 
 def process_call_log(argName_to_node, call_log, def_node, imports):
     logged_names_types = (
-        (n, t)
-        for n, t in call_log.arg2type.items() if n not in arg_name_blacklist
+        (n, t) for n, t in call_log.arg2type.items() if n not in arg_name_blacklist
     )
     for arg_name, arg_type in logged_names_types:
         ann, additional_imports = build_annotation_add_to_imports(arg_type)
@@ -139,12 +138,14 @@ def process_call_log(argName_to_node, call_log, def_node, imports):
 def build_node(type_ann):
     return Node.from_fst({"type": "name", "value": type_ann})
 
+
 def just_try(func):
     def inner_function(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except Exception:
             return None
+
     return inner_function
 
 
@@ -152,13 +153,15 @@ def remove_unwanted_annotations(red):
     blacklist = ["Any", "None", "type"]
 
     for node in red.find_all("def"):
-        if just_try(lambda x:x.annotation.dumps())(node) in blacklist:
+        if just_try(lambda x: x.annotation.dumps())(node) in blacklist:
             node.annotation = ""
-        elif just_try(lambda x:x.return_annotation.dumps())(node) in blacklist:
-            node.return_annotation=""
+        elif just_try(lambda x: x.return_annotation.dumps())(node) in blacklist:
+            node.return_annotation = ""
 
 
-def enrich_pyfiles_by_type_hints(type_logs: List[TypesLog], overwrite=True, verbose=False):
+def enrich_pyfiles_by_type_hints(
+    type_logs: List[TypesLog], overwrite=True, verbose=False
+):
     print(f"got {len(type_logs)} type-logs")
     type_logs_grouped = {
         t: list(g)
