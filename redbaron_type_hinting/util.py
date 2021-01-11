@@ -1,4 +1,5 @@
 from redbaron import Node, RedBaron
+from typeguard.util import TypesLog
 
 
 def build_node(type_ann: str):
@@ -20,3 +21,19 @@ def read_red(py_file: str) -> RedBaron:
     with open(py_file, "r") as source_code:
         red = RedBaron(source_code.read())
     return red
+
+
+@just_try
+def find_node(red: RedBaron, type_log: TypesLog):
+    node_name = type_log.qualname.split(".")[-1]
+    def_nodes = red.find_all("def", name=node_name)
+    assert len(def_nodes) > 0
+
+    def match_type_log_to_node(dn):
+        num_decorators = len(dn.decorators)
+        return (
+            dn.absolute_bounding_box.top_left.line + num_decorators
+        ) == type_log.line
+
+    matches = filter(match_type_log_to_node, def_nodes)
+    return next(matches)

@@ -5,7 +5,7 @@ from typing import Tuple, Union, Dict, List, Set, Optional
 from redbaron import RedBaron, NameNode
 from typeguard.util import TypesLog, CallLog
 
-from redbaron_type_hinting.util import build_node, just_try, read_red
+from redbaron_type_hinting.util import build_node, just_try, read_red, find_node
 
 typing_list = ["List", "Dict", "Tuple", "Generator", "Any"]
 replace_map = {"NoneType": "None"}
@@ -90,9 +90,11 @@ def is_childclass(mother: str, child: str, module_s: str):
 
     return is_sub
 
+
 @just_try
-def get_module(additional_imports:Set[str]):
+def get_module(additional_imports: Set[str]):
     return next(iter(additional_imports)).strip("from ").split(" import")[0]
+
 
 def build_ann_node(
     imports, additional_imports, annotation: Optional[NameNode], new_annotation: str
@@ -121,9 +123,11 @@ def build_ann_node(
     return build_node(new_annotation)
 
 
+@just_try
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     imports = set()
-    def_node = red.find("def", name=tl.qualname.split(".")[-1])
+    def_node = find_node(red, tl)
+    assert def_node is not None
     argName_to_node = {
         arg.name.fst()["value"]: (arg, "annotation") for arg in def_node.arguments
     }
@@ -184,7 +188,12 @@ def enrich_pyfiles_by_type_hints(
         red = read_red(py_file)
         existent_imports = get_existent_imports(red)
 
-        imports = {imp for type_log in tls for imp in add_annotations(red, type_log)}
+        imports = {
+            imp
+            for type_log in tls
+            for imp in add_annotations(red, type_log)
+            if imp is not None
+        }
         remove_unwanted_annotations(red)
         print(f"imports: {imports}")
         [

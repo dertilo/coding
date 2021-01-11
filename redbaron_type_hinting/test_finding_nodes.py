@@ -10,7 +10,7 @@ from typing import List
 from redbaron import NameNode
 from typeguard.util import TYPEGUARD_CACHE, TypesLog
 
-from redbaron_type_hinting.util import read_red
+from redbaron_type_hinting.util import read_red, find_node
 
 
 class Clazz:
@@ -86,18 +86,17 @@ TYPES_LOGS = [
 ]
 
 
-@pytest.mark.parametrize("type_log", TYPES_LOGS,ids=[json.dumps(asdict(tl)) for tl in TYPES_LOGS])
+@pytest.mark.parametrize(
+    "type_log", TYPES_LOGS, ids=[json.dumps(asdict(tl)) for tl in TYPES_LOGS]
+)
 def test_find_decorated_fun_by_name_and_line_typegard(red, type_log: TypesLog):
-    node_name = type_log.qualname.split(".")[-1]
-    def_nodes = red.find_all("def", name=node_name)
-    assert len(def_nodes)>0
+    match = find_node(red, type_log)
+    assert match is not None
 
 
-    def match_type_log_to_node(dn):
-        num_decorators = len(dn.decorators)
-        return (dn.absolute_bounding_box.top_left.line + num_decorators) == type_log.line
-
-    assert len(list(filter(match_type_log_to_node, def_nodes))) == 1
+def test_cannot_find(red):
+    type_log = TypesLog("bla", "fun", line=-1)
+    assert find_node(red, type_log) is None
 
 
 # if __name__ == "__main__":
