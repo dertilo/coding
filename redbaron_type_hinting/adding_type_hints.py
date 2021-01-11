@@ -1,68 +1,12 @@
 import importlib
 from itertools import groupby
-from typing import Tuple, Union, Dict, List, Set, Optional
+from typing import Tuple, Dict, List, Set, Optional
 
 from redbaron import RedBaron, NameNode
 from typeguard.util import TypesLog, CallLog
 
+from redbaron_type_hinting.parse_annotations import parse_annotation_build_imports
 from redbaron_type_hinting.util import build_node, just_try, read_red, find_node
-
-typing_list = ["List", "Dict", "Tuple", "Generator", "Any"]
-replace_map = {"NoneType": "None"}
-
-
-def build_annotation_add_to_imports(qualname: str) -> Tuple[str, set]:
-    imports = set()
-
-    def append_node(nodes, node_name, children: str = None):
-        if len(node_name) > 0:
-            module_path, ann_name = build_path_name(node_name)
-            if module_path is not None:
-                imports.add(f"from {module_path} import {ann_name}")
-            elif ann_name.capitalize() in typing_list:
-                ann_name = ann_name.capitalize()
-                imports.add(f"from typing import {ann_name}")
-
-            ann_name = replace_map.get(ann_name, ann_name)
-
-            if children is not None:
-                ann_name = f"{ann_name}[{children}]"
-
-            nodes.append(ann_name)
-
-    def parse_tree(seq: List[str]) -> str:
-        nodes: List[Union[Dict, str]] = []
-        node = ""
-
-        while len(seq) > 0:
-            x = seq.pop(0)
-            if x == "[":
-                append_node(nodes, node, children=parse_tree(seq))
-                node = ""
-            elif x == "]":
-                append_node(nodes, node)
-                return ",".join(nodes)
-            elif x == ",":
-                append_node(nodes, node)
-                node = ""
-            else:
-                node += x
-
-        append_node(nodes, node)
-        return ",".join(nodes)
-
-    ann_name = parse_tree(list(qualname))
-    return ann_name, imports
-
-
-def build_path_name(type_name: str) -> Tuple[str, str]:
-    if "." in type_name:
-        s = type_name.split(".")
-        module_path = ".".join(s[:-1])
-        type_name = s[-1]
-    else:
-        module_path = None
-    return module_path, type_name
 
 
 def get_existent_imports(red: RedBaron) -> set:
@@ -150,7 +94,7 @@ def process_call_log(
     logged_names_types += [("return", call_log.return_type)]
 
     for arg_name, arg_type in logged_names_types:
-        ann, additional_imports = build_annotation_add_to_imports(arg_type)
+        ann, additional_imports = parse_annotation_build_imports(arg_type)
         if ann is not None:
             arg_node, attr_name = argName_to_node[arg_name]
             m_ann = build_ann_node(
