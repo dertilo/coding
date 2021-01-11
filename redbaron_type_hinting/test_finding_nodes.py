@@ -38,6 +38,12 @@ class SecondDecoratedFun:
     def fun(x):
         return x
 
+class ClazzWithClassmethod:
+
+    @classmethod
+    def fun(cls,x):
+        return x
+
 
 @pytest.fixture
 def red():
@@ -75,12 +81,13 @@ def test_find_by_name_and_line_typegard(red):
     type_log = file_to_typelog[f"{__file__.strip(os.getcwd())}"]
 
     def_nodes: List[NameNode] = red.find_all("def", name="fun")
-    assert len(def_nodes) == 4
     assert type_log.qualname == "fun"
     assert def_nodes[1].absolute_bounding_box.top_left.line == type_log.line
 
 
 foo = SecondDecoratedFun.fun("bar")
+foo = ClazzWithClassmethod.fun("bar")
+
 TYPES_LOGS = [
     tl
     for tl in TYPEGUARD_CACHE.values()
@@ -101,8 +108,8 @@ def test_cannot_find(red):
     assert find_node(red, type_log) is None
 
 
-# if __name__ == "__main__":
-#     red = read_red(__file__)
-#     def_nodes = red.find_all("def", name="fun")
-#     dn = def_nodes[3]
-#     print()
+if __name__ == "__main__":
+    red = read_red(__file__)
+    def_nodes = red.find_all("def", name="fun")
+    dn = def_nodes[3]
+    print()
