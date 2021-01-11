@@ -11,7 +11,9 @@ from redbaron import NameNode
 from typeguard.util import TYPEGUARD_CACHE, TypesLog
 
 from redbaron_type_hinting.util import read_red, find_node
-
+"""
+pytest -s --typeguard-packages=redbaron_type_hinting redbaron_type_hinting/test_finding_nodes.py
+"""
 
 class Clazz:
     @staticmethod
