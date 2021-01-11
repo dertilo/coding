@@ -3,6 +3,7 @@ import os
 import sys
 from abc import abstractmethod
 from dataclasses import asdict, dataclass
+from functools import wraps
 from pprint import pprint
 
 import pytest
@@ -11,6 +12,7 @@ from typing import List
 
 from redbaron import NameNode
 from typeguard.util import TYPEGUARD_CACHE, TypesLog
+from util import data_io
 
 from redbaron_type_hinting.util import read_red, find_node
 
@@ -30,21 +32,22 @@ def fun(x):
 
 
 def some_decorator(f):
+    @wraps(f)
     def fun(*args):
         return f(*args)
 
     return fun
 
 
-# class DecoratedStaticMethod:
-#     @staticmethod
-#     @some_decorator
-#     def fun(x):
-#         return x
-#
+class DecoratedStaticMethod:
+    @staticmethod
+    @some_decorator
+    def fun(x):
+        return x
+
+
 class StaticMethod:
     @staticmethod
-    # @some_decorator
     def fun(x):
         return x + "what"
 
@@ -90,8 +93,8 @@ def red():
 #     assert def_nodes[1].absolute_bounding_box.top_left.line == 17
 
 
-# foo = DecoratedStaticMethod.fun("bar")
 foo = StaticMethod.fun("bar")
+foo = DecoratedStaticMethod.fun("bar")
 foo = ClazzWithClassmethod.fun("bar")
 foo = ClazzDecoratedClassmethod.fun("bar")
 
@@ -100,8 +103,9 @@ TYPES_LOGS = [
     tl
     for tl in TYPEGUARD_CACHE.values()
     if f"{tl.func_module.replace('.','/')}.py" == __file__.strip(os.getcwd())
+    if tl.qualname.endswith("fun")
 ]
-print(len(TYPES_LOGS))
+assert len(TYPES_LOGS) == 4  #
 
 
 @pytest.mark.parametrize(
@@ -115,10 +119,3 @@ def test_find_decorated_fun_by_name_and_line_typegard(red, type_log: TypesLog):
 def test_cannot_find(red):
     type_log = TypesLog("bla", "fun", line=-1)
     assert find_node(red, type_log) is None
-
-
-if __name__ == "__main__":
-    red = read_red(__file__)
-    def_nodes = red.find_all("def", name="fun")
-    dn = def_nodes[3]
-    print()
