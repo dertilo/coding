@@ -34,9 +34,13 @@ def find_node(red: RedBaron, type_log: TypesLog):
 
     def match_typelog_to_node(dn):
         num_decorators = len(dn.decorators)
-        is_classmethod = any([dec.dumps() == "@classmethod" for dec in dn.decorators])
+        is_class_or_static_method = any(
+            [dec.dumps() in ["@classmethod", "@staticmethod"] for dec in dn.decorators]
+        )
         return (
-            dn.absolute_bounding_box.top_left.line + num_decorators - is_classmethod
+            dn.absolute_bounding_box.top_left.line
+            + num_decorators
+            - is_class_or_static_method
         ) == type_log.line
 
     matches = filter(match_typelog_to_node, def_nodes)

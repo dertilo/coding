@@ -1,7 +1,8 @@
 import json
 import os
+import sys
 from abc import abstractmethod
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from pprint import pprint
 
 import pytest
@@ -35,11 +36,17 @@ def some_decorator(f):
     return fun
 
 
-class SecondDecoratedFun:
+# class DecoratedStaticMethod:
+#     @staticmethod
+#     @some_decorator
+#     def fun(x):
+#         return x
+#
+class StaticMethod:
     @staticmethod
-    @some_decorator
+    # @some_decorator
     def fun(x):
-        return x
+        return x + "what"
 
 
 class ClazzWithClassmethod:
@@ -83,27 +90,18 @@ def red():
 #     assert def_nodes[1].absolute_bounding_box.top_left.line == 17
 
 
-def test_find_by_name_and_line_typegard(red):
-    foo = fun("bar")
-    file_to_typelog = {
-        f"{tl.func_module.replace('.','/')}.py": tl for tl in TYPEGUARD_CACHE.values()
-    }
-    type_log = file_to_typelog[f"{__file__.strip(os.getcwd())}"]
-
-    def_nodes: List[NameNode] = red.find_all("def", name="fun")
-    assert type_log.qualname == "fun"
-    assert def_nodes[1].absolute_bounding_box.top_left.line == type_log.line
-
-
-foo = SecondDecoratedFun.fun("bar")
+# foo = DecoratedStaticMethod.fun("bar")
+foo = StaticMethod.fun("bar")
 foo = ClazzWithClassmethod.fun("bar")
 foo = ClazzDecoratedClassmethod.fun("bar")
+
 
 TYPES_LOGS = [
     tl
     for tl in TYPEGUARD_CACHE.values()
     if f"{tl.func_module.replace('.','/')}.py" == __file__.strip(os.getcwd())
 ]
+print(len(TYPES_LOGS))
 
 
 @pytest.mark.parametrize(
