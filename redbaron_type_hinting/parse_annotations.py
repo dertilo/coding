@@ -28,7 +28,6 @@ def parse_annotation_build_imports(qualname):
     imports = set()
     process_node = partial(build_ann_accum_imports, imports=imports)
     ann_name = next(iter(parse_tree(list(qualname), branch_to_string, process_node)))
-    assert isinstance(ann_name, str)
     return ann_name, imports
 
 

@@ -40,33 +40,6 @@ def get_module(additional_imports: Set[str]):
     return next(iter(additional_imports)).strip("from ").split(" import")[0]
 
 
-def build_ann_node(
-    imports, additional_imports, annotation: Optional[NameNode], new_annotation: str
-):
-    # TODO(tilo) fuse with build_annotation_add_to_imports
-    if annotation is not None:
-        normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
-        old_annotation = normalize(annotation)
-
-        module_s = get_module(additional_imports)
-        if is_childclass(
-            mother=old_annotation, child=new_annotation, module_s=module_s
-        ):
-            new_annotation = old_annotation
-        else:
-            imports |= additional_imports
-
-            if "Union" in old_annotation:
-                old_annotation.replace("]", f",{new_annotation}]")
-            else:
-                imports.add(f"from typing import Union")
-                new_annotation = f"Union[{old_annotation},{new_annotation}]"
-    else:
-        imports |= additional_imports
-
-    return build_node(new_annotation)
-
-
 @just_try
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     imports = set()
@@ -94,13 +67,34 @@ def process_call_log(
     logged_names_types += [("return", call_log.return_type)]
 
     for arg_name, arg_type in logged_names_types:
-        ann, additional_imports = parse_annotation_build_imports(arg_type)
-        if ann is not None:
-            arg_node, attr_name = argName_to_node[arg_name]
-            m_ann = build_ann_node(
-                imports, additional_imports, getattr(arg_node, attr_name), ann
-            )
-            setattr(arg_node, attr_name, m_ann)
+        new_annotation, additional_imports = parse_annotation_build_imports(arg_type)
+        assert new_annotation is not None
+        arg_node, attr_name = argName_to_node[arg_name]
+
+        annotation = getattr(arg_node, attr_name)
+        if annotation is not None:
+            normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
+            old_annotation = normalize(annotation)
+
+            module_s = get_module(additional_imports)
+            if is_childclass(
+                    mother=old_annotation, child=new_annotation, module_s=module_s
+            ):
+                new_annotation = old_annotation
+            else:
+                imports |= additional_imports
+
+                if "Union" in old_annotation:
+                    old_annotation.replace("]", f",{new_annotation}]")
+                else:
+                    imports.add(f"from typing import Union")
+                    new_annotation = f"Union[{old_annotation},{new_annotation}]"
+        else:
+            imports |= additional_imports
+
+        m_ann = build_node(new_annotation)
+
+        setattr(arg_node, attr_name, m_ann)
 
 
 def remove_unwanted_annotations(red):
