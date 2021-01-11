@@ -1,3 +1,6 @@
+import sys
+import traceback
+
 from redbaron import Node, RedBaron
 from typeguard.util import TypesLog
 
@@ -11,7 +14,7 @@ def just_try(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            print(e)
+            traceback.print_exc(file=sys.stderr)
             return None
 
     return inner_function
@@ -29,11 +32,11 @@ def find_node(red: RedBaron, type_log: TypesLog):
     def_nodes = red.find_all("def", name=node_name)
     assert len(def_nodes) > 0
 
-    def match_type_log_to_node(dn):
+    def match_typelog_to_node(dn):
         num_decorators = len(dn.decorators)
         return (
             dn.absolute_bounding_box.top_left.line + num_decorators
         ) == type_log.line
 
-    matches = filter(match_type_log_to_node, def_nodes)
+    matches = filter(match_typelog_to_node, def_nodes)
     return next(matches)

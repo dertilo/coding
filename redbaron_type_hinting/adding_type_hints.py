@@ -35,12 +35,14 @@ def is_childclass(mother: str, child: str, module_s: str):
     return is_sub
 
 
-@just_try
+# @just_try
 def get_module(additional_imports: Set[str]):
-    return next(iter(additional_imports)).strip("from ").split(" import")[0]
+    if len(additional_imports)==0:
+        return None
+    else:
+        return next(iter(additional_imports)).strip("from ").split(" import")[0]
 
 
-@just_try
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
     imports = set()
     def_node = find_node(red, tl)
@@ -76,19 +78,14 @@ def process_call_log(
             normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
             old_annotation = normalize(annotation)
 
-            module_s = get_module(additional_imports)
-            if is_childclass(
-                    mother=old_annotation, child=new_annotation, module_s=module_s
-            ):
-                new_annotation = old_annotation
-            else:
-                imports |= additional_imports
+            # module_s = get_module(additional_imports)
+            imports |= additional_imports
 
-                if "Union" in old_annotation:
-                    old_annotation.replace("]", f",{new_annotation}]")
-                else:
-                    imports.add(f"from typing import Union")
-                    new_annotation = f"Union[{old_annotation},{new_annotation}]"
+            if "Union" in old_annotation:
+                old_annotation.replace("]", f",{new_annotation}]")
+            else:
+                imports.add(f"from typing import Union")
+                new_annotation = f"Union[{old_annotation},{new_annotation}]"
         else:
             imports |= additional_imports
 

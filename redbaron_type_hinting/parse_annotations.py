@@ -55,16 +55,17 @@ def parse_qualname(qualname: str) -> Tuple[Optional[str], str]:
             "List[str,numpy.ndarray]",
             "List[str,ndarray]",
             {"from typing import List", "from numpy import ndarray"},
-        )
+        ),
+        ("numpy.ndarray","ndarray", {"from numpy import ndarray"})
     ],
 )
 def test_parse_annotation(annotation, expected_ann, expected_imports):
-    ann_name, imports = parse_annotation_build_imports("List[str,numpy.ndarray]")
+    ann_name, imports = parse_annotation_build_imports(annotation)
     assert ann_name == expected_ann
     assert imports == expected_imports
 
 
 if __name__ == "__main__":
-    ann_name, imports = parse_annotation_build_imports("List[str,numpy.ndarray]")
+    ann_name, imports = parse_annotation_build_imports("numpy.ndarray")
     print(ann_name)
     print(imports)
