@@ -29,13 +29,15 @@ def parse_tree(seq: List[str], build_branch=dict_lists, process_node=lambda x: x
             if len(node) > 0:
                 yield process_node(node)
         else:
-            assert False
+            assert stop_sign not in STOP_SIGNS
+            node += stop_sign
+            yield node
 
 
 def eat_node(seq):
     x = seq.pop(0)
     node = ""
-    while x not in STOP_SIGNS:
+    while x not in STOP_SIGNS and len(seq) > 0:
         node += x
         x = seq.pop(0)
     return node, x
@@ -53,6 +55,7 @@ def branch_to_string(mother: str, children: Generator[str, None, None] = None):
 @pytest.mark.parametrize(
     "string",
     [
+        "Aa",
         "a[Bbb[Dd,Ee],xx[what],Cccc]",
         "Aa[Bbb,Cccc[Dd,Eee]]",
         "Aa[Bbb[Dd,Ee],Cccc]",
