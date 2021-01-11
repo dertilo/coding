@@ -1,5 +1,6 @@
 import json
 import os
+from abc import abstractmethod
 from dataclasses import asdict
 from pprint import pprint
 
@@ -11,9 +12,11 @@ from redbaron import NameNode
 from typeguard.util import TYPEGUARD_CACHE, TypesLog
 
 from redbaron_type_hinting.util import read_red, find_node
+
 """
 pytest -s --typeguard-packages=redbaron_type_hinting redbaron_type_hinting/test_finding_nodes.py
 """
+
 
 class Clazz:
     @staticmethod
@@ -26,22 +29,29 @@ def fun(x):
 
 
 def some_decorator(f):
-    def fun(f):
-        return f
+    def fun(*args):
+        return f(*args)
 
     return fun
 
 
 class SecondDecoratedFun:
-    @some_decorator
     @staticmethod
+    @some_decorator
     def fun(x):
         return x
 
-class ClazzWithClassmethod:
 
+class ClazzWithClassmethod:
     @classmethod
-    def fun(cls,x):
+    def fun(cls, x):
+        return x
+
+
+class ClazzDecoratedClassmethod:
+    @classmethod
+    @some_decorator
+    def fun(cls, x):
         return x
 
 
@@ -87,6 +97,7 @@ def test_find_by_name_and_line_typegard(red):
 
 foo = SecondDecoratedFun.fun("bar")
 foo = ClazzWithClassmethod.fun("bar")
+foo = ClazzDecoratedClassmethod.fun("bar")
 
 TYPES_LOGS = [
     tl
