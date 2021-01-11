@@ -1,71 +1,50 @@
 from functools import partial
-from typing import Tuple, List, Union, Dict, Set
+from typing import Tuple, List, Union, Dict, Set, Optional
 
 import pytest
 
-
-def append_node_add_to_imports(nodes, node_name, children: str = None, imports=None):
-    if imports is None:
-        imports = set()
-
-    imp = None
-    if len(node_name) > 0:
-        module_path, ann_name = build_path_name(node_name)
-        if module_path is not None:
-            imp = f"from {module_path} import {ann_name}"
-        elif ann_name.capitalize() in typing_list:
-            ann_name = ann_name.capitalize()
-            imp = f"from typing import {ann_name}"
-
-        ann_name = replace_map.get(ann_name, ann_name)
-
-        if children is not None:
-            ann_name = f"{ann_name}[{children}]"
-
-        nodes.append(ann_name)
-    if imp is not None:
-        imports.add(imp)
-
-
-def parse_annotation_build_imports(qualname):
-    imports = set()
-    append_node = partial(append_node_add_to_imports, imports=imports)
-
-    def parse_tree(seq: List[str]) -> str:
-        nodes: List[Union[Dict, str]] = []
-        node = ""
-
-        while len(seq) > 0:
-            x = seq.pop(0)
-            if x == "[":
-                append_node(nodes, node, children=parse_tree(seq))
-                node = ""
-            elif x == "]":
-                append_node(nodes, node)
-                return ",".join(nodes)
-            elif x == ",":
-                append_node(nodes, node)
-                node = ""
-            else:
-                node += x
-        append_node(nodes, node)
-        return ",".join(nodes)
-
-    ann_name = parse_tree(list(qualname))
-    assert isinstance(ann_name, str)
-    return ann_name, imports
-
+from redbaron_type_hinting.parse_seq_to_tree import branch_to_string, parse_tree
 
 typing_list = ["List", "Dict", "Tuple", "Generator", "Any"]
 replace_map = {"NoneType": "None"}
 
 
-def build_path_name(type_name: str) -> Tuple[str, str]:
-    if "." in type_name:
-        s = type_name.split(".")
+def build_ann_accum_imports(node_name, imports:Set[str]):
+
+    module_path, ann_name = parse_qualname(node_name)
+    if module_path is not None:
+        imp = f"from {module_path} import {ann_name}"
+        imports.add(imp)
+    elif ann_name.capitalize() in typing_list:
+        ann_name = ann_name.capitalize()
+        imp = f"from typing import {ann_name}"
+        imports.add(imp)
+
+    ann_name = replace_map.get(ann_name, ann_name)
+    return ann_name
+
+
+def parse_annotation_build_imports(qualname):
+    imports = set()
+    process_node = partial(build_ann_accum_imports, imports=imports)
+    ann_name = next(iter(parse_tree(list(qualname), branch_to_string, process_node)))
+    assert isinstance(ann_name, str)
+    return ann_name, imports
+
+
+def parse_qualname(qualname: str) -> Tuple[Optional[str], str]:
+    """
+    :param qualname: like: numpy.ndarray
+    :return:
+        module_path = numpy
+        type_name = ndarry
+    """
+    if "." in qualname:
+        s = qualname.split(".")
         module_path = ".".join(s[:-1])
         type_name = s[-1]
     else:
+        type_name = qualname
         module_path = None
     return module_path, type_name
 

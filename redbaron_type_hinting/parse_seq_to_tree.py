@@ -13,13 +13,13 @@ def dict_lists(mother, children=None):
         return mother
 
 
-def parse_tree(seq: List[str], accum_siblings=dict_lists, process_node=lambda x: x):
+def parse_tree(seq: List[str], build_branch=dict_lists, process_node=lambda x: x):
     while len(seq) > 0:
         node, stop_sign = eat_node(seq)
 
         if stop_sign == "[":
-            yield accum_siblings(
-                process_node(node), parse_tree(seq, accum_siblings, process_node)
+            yield build_branch(
+                process_node(node), parse_tree(seq, build_branch, process_node)
             )
         elif stop_sign == "]":
             if len(node) > 0:
@@ -41,7 +41,7 @@ def eat_node(seq):
     return node, x
 
 
-def to_string(mother: str, children: Generator[str, None, None] = None):
+def branch_to_string(mother: str, children: Generator[str, None, None] = None):
     if children is not None:
         children = list(children)
         assert all([isinstance(c, str) for c in children])
@@ -59,7 +59,7 @@ def to_string(mother: str, children: Generator[str, None, None] = None):
     ],
 )
 def test_tree_parsing(string):
-    assert string == next(iter(parse_tree(list(string), to_string)))
+    assert string == next(iter(parse_tree(list(string), branch_to_string)))
 
 
 def capitalize_node(n):
@@ -67,10 +67,12 @@ def capitalize_node(n):
 
 
 @pytest.mark.parametrize(
-    "input,output",
+    "inputt,output",
     [
         ("a[b[cc[ddd]]]", "A[B[Cc[Ddd]]]"),
     ],
 )
-def test_nod_capitalizing(input, output):
-    assert output == next(iter(parse_tree(list(input), to_string, capitalize_node)))
+def test_nod_capitalizing(inputt, output):
+    assert output == next(
+        iter(parse_tree(list(inputt), branch_to_string, capitalize_node))
+    )
