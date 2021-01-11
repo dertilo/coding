@@ -3,7 +3,8 @@ from typing import List, Dict, Union, Generator
 
 import pytest
 
-STOP_SIGNS = ["[", ",", "]"]
+END = "<END>"
+STOP_SIGNS = ["[", ",", "]", END]
 
 
 def dict_lists(mother, children=None):
@@ -17,29 +18,40 @@ def parse_tree(seq: List[str], build_branch=dict_lists, process_node=lambda x: x
     while len(seq) > 0:
         node, stop_sign = eat_node(seq)
 
+        if node is not None:
+            node = process_node(node)
+
         if stop_sign == "[":
-            yield build_branch(
-                process_node(node), parse_tree(seq, build_branch, process_node)
-            )
+            yield build_branch(node, parse_tree(seq, build_branch, process_node))
         elif stop_sign == "]":
-            if len(node) > 0:
-                yield process_node(node)
+            if node is not None:
+                yield node
             break
         elif stop_sign == ",":
-            if len(node) > 0:
-                yield process_node(node)
-        else:
-            assert stop_sign not in STOP_SIGNS
-            node += stop_sign
+            if node is not None:
+                yield node
+        elif stop_sign == END:
             yield node
 
 
-def eat_node(seq):
+def eat_node(seq: List[str]):
+    assert len(seq) > 0
     x = seq.pop(0)
     node = ""
     while x not in STOP_SIGNS and len(seq) > 0:
         node += x
         x = seq.pop(0)
+
+    if len(seq) == 0 and x not in STOP_SIGNS:
+        node += x
+        x = END
+    elif len(node) == 0:
+        node = None
+    elif x in STOP_SIGNS:
+        pass
+    else:
+        assert False
+
     return node, x
 
 
