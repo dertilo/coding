@@ -9,16 +9,18 @@ def build_node(type_ann: str):
     return Node.from_fst({"type": "name", "value": type_ann})
 
 
-def just_try(func):
-    def inner_function(*args, **kwargs):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            traceback.print_exc(file=sys.stderr)
-            return None
+def just_try(verbose=False):
+    def decorator(func):
+        def inner_function(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except Exception as e:
+                if verbose:
+                    traceback.print_exc(file=sys.stderr)
+                return None
 
-    return inner_function
-
+        return inner_function
+    return decorator
 
 def read_red(py_file: str) -> RedBaron:
     with open(py_file, "r") as source_code:
@@ -26,7 +28,7 @@ def read_red(py_file: str) -> RedBaron:
     return red
 
 
-@just_try
+@just_try(verbose=True)
 def find_node(red: RedBaron, type_log: TypesLog):
     node_name = type_log.qualname.split(".")[-1]
     def_nodes = red.find_all("def", name=node_name)
