@@ -37,13 +37,13 @@ def is_childclass(mother: str, child: str, module_s: str):
 
 # @just_try
 def get_module(additional_imports: Set[str]):
-    if len(additional_imports)==0:
+    if len(additional_imports) == 0:
         return None
     else:
         FROM = "from "
         s = next(iter(additional_imports))
         assert s.startswith(FROM)
-        return s[len(FROM):].split(" import")[0]
+        return s[len(FROM) :].split(" import")[0]
 
 
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
@@ -62,7 +62,7 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
 
 
 def process_call_log(
-    argName_to_node,#: Dict[str, Tuple[NameNode, str]],
+    argName_to_node,  #: Dict[str, Tuple[NameNode, str]],
     call_log: CallLog,
     imports: Set[str],
 ):
@@ -86,7 +86,7 @@ def process_call_log(
             if module_s is None:
                 new_annotation = old_annotation
             elif is_childclass(
-                    mother=old_annotation, child=new_annotation, module_s=module_s
+                mother=old_annotation, child=new_annotation, module_s=module_s
             ):
                 new_annotation = old_annotation
             else:
@@ -109,16 +109,16 @@ def remove_unwanted_annotations(red):
     blacklist = ["Any", "None", "type"]
 
     for node in red.find_all("def"):
-        if just_try(lambda x: x.annotation.dumps())(node) in blacklist:
-            node.annotation = ""
-        elif just_try(lambda x: x.return_annotation.dumps())(node) in blacklist:
+        for arg in node.arguments:
+            if just_try()(lambda x: arg.annotation.dumps())(node) in blacklist:
+                node.annotation = ""
+        if just_try()(lambda x: x.return_annotation.dumps())(node) in blacklist:
             node.return_annotation = ""
 
 
 def enrich_pyfiles_by_type_hints(
     type_logs: List[TypesLog], overwrite=True, verbose=False
 ):
-    print(f"got {len(type_logs)} type-logs")
     type_logs_grouped = {
         t: list(g)
         for t, g in groupby(
@@ -132,22 +132,29 @@ def enrich_pyfiles_by_type_hints(
             print(py_file)
             print(tls)
         red = read_red(py_file)
-        existent_imports = get_existent_imports(red)
-
-        imports = {
-            imp
-            for type_log in tls
-            for imp in add_annotations(red, type_log)
-            if imp is not None
-        }
-        remove_unwanted_annotations(red)
-        print(f"imports: {imports}")
-        [
-            red.insert(1, imp)
-            for imp in imports
-            if imp not in existent_imports and module not in imp
-        ]
+        add_annotations_and_imports(red, tls, module)
 
         py_file = py_file if overwrite else f"{py_file.replace('.py','')}_modified.py"
         with open(py_file, "w") as source_code:
             source_code.write(red.dumps())
+
+
+def add_annotations_and_imports(red, tls, module):
+    existent_imports = get_existent_imports(red)
+    imports = add_annotations_build_imports(red, tls)
+    [
+        red.insert(1, imp)
+        for imp in imports
+        if imp not in existent_imports and module not in imp
+    ]
+
+
+def add_annotations_build_imports(red: RedBaron, tls: List[TypesLog]):
+    imports = {
+        imp
+        for type_log in tls
+        for imp in add_annotations(red, type_log)
+        if imp is not None
+    }
+    remove_unwanted_annotations(red)
+    return imports
