@@ -27,8 +27,7 @@ def test_str_fun(fun_name):
     m = importlib.import_module(module_name)
     input_red = read_red(f"{module_name.replace('.','/')}.py")
     expected_red = read_red(f"{expected_module_name.replace('.','/')}.py")
-    type_logs = build_type_log(lambda: getattr(m, fun_name)("foo"))
-    assert len(type_logs) == 1
+    type_logs = build_type_log(lambda: getattr(m, "main")())
 
     add_annotations_build_imports(input_red, type_logs)
     input_py = input_red.dumps()
