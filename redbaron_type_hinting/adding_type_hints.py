@@ -111,9 +111,9 @@ def remove_unwanted_annotations(red):
     for node in red.find_all("def"):
         for arg in node.arguments:
             if just_try()(lambda x: arg.annotation.dumps())(node) in blacklist:
-                node.annotation = ""
+                node.annotation = build_node("")
         if just_try()(lambda x: x.return_annotation.dumps())(node) in blacklist:
-            node.return_annotation = ""
+            node.return_annotation = build_node("")
 
 
 def enrich_pyfiles_by_type_hints(

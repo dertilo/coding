@@ -44,7 +44,7 @@ def test_unwanted_annotations(red):
     add_annotations_build_imports(red, [type_log])
 
     def_node = red.find("def", name="fun")
-    return_anno = def_node.return_annotation
+    return_anno = def_node.return_annotation.dumps()
     assert return_anno != "None"
 
 def already_annotated_fun(x)->str:
@@ -56,5 +56,5 @@ def test_union(red):
     add_annotations_build_imports(red, [type_log])
 
     def_node = red.find("def", name="already_annotated_fun")
-    return_anno = def_node.return_annotation
+    return_anno = def_node.return_annotation.dumps()
     assert return_anno == "str"
