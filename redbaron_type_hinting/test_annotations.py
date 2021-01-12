@@ -22,28 +22,39 @@ def fun(x):
     return x
 
 
-def build_type_log(run):
+def build_type_log(run,filter_for="fun"):
     keys = list(TYPEGUARD_CACHE.keys())
     [TYPEGUARD_CACHE.pop(k) for k in keys]
 
     run()
-
+    print(TYPEGUARD_CACHE)
     TYPES_LOGS = [
         tl
         for tl in TYPEGUARD_CACHE.values()
         if f"{tl.func_module.replace('.', '/')}.py" == __file__.strip(os.getcwd())
-        if tl.qualname.endswith("fun")
+        if tl.qualname.endswith(filter_for)
     ]
     assert len(TYPES_LOGS) == 1
     type_log = TYPES_LOGS[0]
     return type_log
 
-
-def test_add_annotations_build_imports(red):
-    type_log = build_type_log(lambda: fun(None))
+def test_unwanted_annotations(red):
+    type_log = build_type_log(lambda: fun(None),filter_for="fun")
     assert len(type_log.call_logs) == 1
     add_annotations_build_imports(red, [type_log])
 
     def_node = red.find("def", name="fun")
     return_anno = def_node.return_annotation
     assert return_anno != "None"
+
+def already_annotated_fun(x)->str:
+    return x
+
+def test_union(red):
+    type_log = build_type_log(lambda: already_annotated_fun("foo"),filter_for="already_annotated_fun")
+    assert len(type_log.call_logs) == 1
+    add_annotations_build_imports(red, [type_log])
+
+    def_node = red.find("def", name="already_annotated_fun")
+    return_anno = def_node.return_annotation
+    assert return_anno == "str"
