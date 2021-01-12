@@ -72,7 +72,7 @@ def process_call_log(
     logged_names_types += [("return", call_log.return_type)]
 
     for arg_name, arg_type in logged_names_types:
-        #TODO(tilo): before parsing need to disambiguate types of same name but different packages
+        # TODO(tilo): before parsing need to disambiguate types of same name but different packages
         new_annotation, additional_imports = parse_annotation_build_imports(arg_type)
         assert new_annotation is not None
         arg_node, attr_name = argName_to_node[arg_name]
@@ -112,9 +112,9 @@ def remove_unwanted_annotations(red):
     for node in red.find_all("def"):
         for arg in node.arguments:
             if just_try()(lambda x: arg.annotation.dumps())(node) in blacklist:
-                node.annotation = build_node("")
+                node.annotation = ""
         if just_try()(lambda x: x.return_annotation.dumps())(node) in blacklist:
-            node.return_annotation = build_node("")
+            node.return_annotation = ""
 
 
 def enrich_pyfiles_by_type_hints(

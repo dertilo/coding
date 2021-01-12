@@ -47,8 +47,9 @@ def test_unwanted_annotations(red):
     add_annotations_build_imports(red, [type_log])
 
     def_node = red.find("def", name="fun")
-    return_anno = def_node.return_annotation.dumps()
-    assert return_anno != "None"
+    return_anno = def_node.return_annotation
+    assert isinstance(return_anno, str)
+    assert return_anno == ""
 
 
 def already_annotated_fun(x) -> Dict[str, str]:
