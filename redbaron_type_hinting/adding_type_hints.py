@@ -40,7 +40,10 @@ def get_module(additional_imports: Set[str]):
     if len(additional_imports)==0:
         return None
     else:
-        return next(iter(additional_imports)).strip("from ").split(" import")[0]
+        FROM = "from "
+        s = next(iter(additional_imports))
+        assert s.startswith(FROM)
+        return s[len(FROM):].split(" import")[0]
 
 
 def add_annotations(red: RedBaron, tl: TypesLog) -> set:
@@ -59,7 +62,7 @@ def add_annotations(red: RedBaron, tl: TypesLog) -> set:
 
 
 def process_call_log(
-    argName_to_node: Dict[str, Tuple[NameNode, str]],
+    argName_to_node,#: Dict[str, Tuple[NameNode, str]],
     call_log: CallLog,
     imports: Set[str],
 ):
@@ -78,14 +81,22 @@ def process_call_log(
             normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
             old_annotation = normalize(annotation)
 
-            # module_s = get_module(additional_imports)
-            imports |= additional_imports
-
-            if "Union" in old_annotation:
-                old_annotation.replace("]", f",{new_annotation}]")
+            module_s = get_module(additional_imports)
+            print(f"\n module: {module_s} \n")
+            if module_s is None:
+                new_annotation = old_annotation
+            elif is_childclass(
+                    mother=old_annotation, child=new_annotation, module_s=module_s
+            ):
+                new_annotation = old_annotation
             else:
-                imports.add(f"from typing import Union")
-                new_annotation = f"Union[{old_annotation},{new_annotation}]"
+                imports |= additional_imports
+
+                if "Union" in old_annotation:
+                    old_annotation.replace("]", f",{new_annotation}]")
+                else:
+                    imports.add(f"from typing import Union")
+                    new_annotation = f"Union[{old_annotation},{new_annotation}]"
         else:
             imports |= additional_imports
 
