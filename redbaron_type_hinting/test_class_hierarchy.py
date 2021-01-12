@@ -31,9 +31,11 @@ def fun(x):
     return x
 
 
-def test_annotate_with_super_class(red):
-    foo = fun(Mother())
-    foo = fun(Child())
+def build_type_log(run):
+    keys = list(TYPEGUARD_CACHE.keys())
+    [TYPEGUARD_CACHE.pop(k) for k in keys]
+
+    run()
 
     TYPES_LOGS = [
         tl
@@ -43,6 +45,25 @@ def test_annotate_with_super_class(red):
     ]
     assert len(TYPES_LOGS) == 1
     type_log = TYPES_LOGS[0]
+    return type_log
+
+
+def test_annotate_with_class(red):
+    type_log = build_type_log(lambda: fun(Child()))
+
+    assert len(type_log.call_logs) == 1
+    add_annotations(red, type_log)
+    def_node = red.find("def", name="fun")
+    assert def_node.return_annotation.dumps() == "Child"
+
+
+def test_annotate_with_super_class(red):
+    def run():
+        foo = fun(Mother())
+        foo = fun(Child())
+
+    type_log = build_type_log(run)
+
     assert len(type_log.call_logs) == 2
     add_annotations(red, type_log)
     def_node = red.find("def", name="fun")
