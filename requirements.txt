@@ -1,3 +1,4 @@
 typeguard@git+https://github.com/dertilo/typeguard.git@tilo#egg=typeguard
 redbaron
 util@git+https://github.com/dertilo/util.git#egg=util
+pytest
