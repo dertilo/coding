@@ -72,6 +72,7 @@ def process_call_log(
     logged_names_types += [("return", call_log.return_type)]
 
     for arg_name, arg_type in logged_names_types:
+        #TODO(tilo): before parsing need to disambiguate types of same name but different packages
         new_annotation, additional_imports = parse_annotation_build_imports(arg_type)
         assert new_annotation is not None
         arg_node, attr_name = argName_to_node[arg_name]
@@ -83,7 +84,7 @@ def process_call_log(
 
             module_s = get_module(additional_imports)
             print(f"\n module: {module_s} \n")
-            if module_s is None:
+            if module_s is None or old_annotation == new_annotation:
                 new_annotation = old_annotation
             elif is_childclass(
                 mother=old_annotation, child=new_annotation, module_s=module_s
