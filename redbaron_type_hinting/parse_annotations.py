@@ -20,6 +20,13 @@ def build_ann_accum_imports(node_name, imports:Set[str]):
         imp = f"from typing import {ann_name}"
         imports.add(imp)
 
+    # TODO(tilo): check for inheritance here
+    # module_s = get_module(additional_imports)
+    # is_childclass(
+    #         mother=old_annotation, child=new_annotation, module_s=module_s
+    # ):
+    #     new_annotation = old_annotation
+
     ann_name = replace_map.get(ann_name, ann_name)
     return ann_name
 

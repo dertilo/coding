@@ -82,13 +82,7 @@ def process_call_log(
             normalize = lambda s: s.dumps().replace(" ", "") if s is not None else None
             old_annotation = normalize(annotation)
 
-            module_s = get_module(additional_imports)
-            print(f"\n module: {module_s} \n")
-            if module_s is None or old_annotation == new_annotation:
-                new_annotation = old_annotation
-            elif is_childclass(
-                mother=old_annotation, child=new_annotation, module_s=module_s
-            ):
+            if old_annotation == new_annotation:
                 new_annotation = old_annotation
             else:
                 imports |= additional_imports
@@ -133,18 +127,20 @@ def enrich_pyfiles_by_type_hints(
             print(py_file)
             print(tls)
         red = read_red(py_file)
-        add_annotations_and_imports(red, tls, module)
+        assert all([t.func_module == module for t in tls])
+        add_annotations_and_imports(red, tls)
 
         py_file = py_file if overwrite else f"{py_file.replace('.py','')}_modified.py"
         with open(py_file, "w") as source_code:
             source_code.write(red.dumps())
 
 
-def add_annotations_and_imports(red, tls, module):
+def add_annotations_and_imports(red, tls):
+    module = tls[0].func_module
     existent_imports = get_existent_imports(red)
     imports = add_annotations_build_imports(red, tls)
     [
-        red.insert(1, imp)
+        red.insert(0, imp)
         for imp in imports
         if imp not in existent_imports and module not in imp
     ]
