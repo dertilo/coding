@@ -10,6 +10,10 @@ from redbaron import RedBaron
         ("from foo import bar", ("foo", "bar", None)),
         ("from foo.woo import bar", ("foo.woo", "bar", None)),
         ("from foo.woo import bar as bazz", ("foo.woo", "bar", "bazz")),
+        (
+            "from foo.woo import bar, bazz, woo",
+            ("foo.woo", ["bar", "bazz", "woo"], None),
+        ),
     ],
 )
 def test_parse_imports(pysource, expected):
@@ -22,6 +26,7 @@ def test_parse_imports(pysource, expected):
         parsed = (None, value, get_target(value_root))
     elif r.type == "from_import":
         module = ".".join([x.value for x in r.value])
-        value = r.targets[0].value
+        value = [t.value for t in r.targets]
+        value = value[0] if len(value) == 1 else value
         parsed = (module, value, get_target(r.targets[0]))
     assert expected == parsed
