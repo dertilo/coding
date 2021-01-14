@@ -1,8 +1,6 @@
 from functools import partial
 from typing import Tuple, List, Union, Dict, Set, Optional
 
-import pytest
-
 from redbaron_type_hinting.parse_seq_to_tree import branch_to_string, parse_tree
 
 typing_list = ["List", "Dict", "Tuple", "Generator", "Any"]
@@ -53,26 +51,3 @@ def parse_qualname(qualname: str) -> Tuple[Optional[str], str]:
         type_name = qualname
         module_path = None
     return module_path, type_name
-
-
-@pytest.mark.parametrize(
-    "annotation,expected_ann,expected_imports",
-    [
-        (
-            "List[str,numpy.ndarray]",
-            "List[str,ndarray]",
-            {"from typing import List", "from numpy import ndarray"},
-        ),
-        ("numpy.ndarray","ndarray", {"from numpy import ndarray"})
-    ],
-)
-def test_parse_annotation(annotation, expected_ann, expected_imports):
-    ann_name, imports = parse_annotation_build_imports(annotation)
-    assert ann_name == expected_ann
-    assert imports == expected_imports
-
-
-if __name__ == "__main__":
-    ann_name, imports = parse_annotation_build_imports("numpy.ndarray")
-    print(ann_name)
-    print(imports)
