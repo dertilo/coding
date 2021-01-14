@@ -3,13 +3,21 @@ from redbaron import RedBaron
 
 
 @pytest.mark.parametrize(
-    "pysource,expected", [("import pytest", (None, "pytest", None))]
+    "pysource,expected",
+    [
+        ("import pytest", (None, "pytest", None)),
+        ("import foo as bar", (None, "foo", "bar")),
+    ],
 )
 def test_parse_imports(pysource, expected):
-    exp_module, exp_value, exp_target = expected
-    value = None
+    parsed = (None, None, None)
     r = RedBaron(pysource)[0]
     if r.type == "import":
-        if r.value[0].target == "":
-            value = r.value[0].value[0].value
-    assert exp_value == value
+        value_root = r.value[0]
+        target = value_root.target
+        value = value_root.value[0].value
+        if target == "":
+            parsed = (None, value, None)
+        else:
+            parsed = (None, value, target)
+    assert expected == parsed
