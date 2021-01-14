@@ -1,5 +1,6 @@
 import pytest
 from redbaron import RedBaron
+from redbaron_type_hinting.parsing_imports import parse_imports
 
 
 @pytest.mark.parametrize(
@@ -17,16 +18,6 @@ from redbaron import RedBaron
     ],
 )
 def test_parse_imports(pysource, expected):
-    parsed = (None, None, None)
     r = RedBaron(pysource)[0]
-    get_target = lambda x: x.target if len(x.target) > 0 else None
-    if r.type == "import":
-        value_root = r.value[0]
-        value = value_root.value[0].value
-        parsed = (None, value, get_target(value_root))
-    elif r.type == "from_import":
-        module = ".".join([x.value for x in r.value])
-        value = [t.value for t in r.targets]
-        value = value[0] if len(value) == 1 else value
-        parsed = (module, value, get_target(r.targets[0]))
+    parsed = parse_imports(r)
     assert expected == parsed
