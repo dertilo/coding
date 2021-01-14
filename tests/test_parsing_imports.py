@@ -7,6 +7,7 @@ from redbaron import RedBaron
     [
         ("import pytest", (None, "pytest", None)),
         ("import foo as bar", (None, "foo", "bar")),
+        ("from foo import bar", ("foo", "bar", None)),
     ],
 )
 def test_parse_imports(pysource, expected):
@@ -20,4 +21,8 @@ def test_parse_imports(pysource, expected):
             parsed = (None, value, None)
         else:
             parsed = (None, value, target)
+    elif r.type == "from_import":
+        module = ".".join([x.value for x in r.value])
+        value = r.targets[0].value
+        parsed = (module, value, None)
     assert expected == parsed
