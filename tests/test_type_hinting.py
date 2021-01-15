@@ -4,13 +4,18 @@ import importlib
 import pytest
 from typeguard.util import TYPEGUARD_CACHE
 
-from redbaron_type_hinting.adding_type_hints import add_annotations_build_imports, \
-    add_annotations_and_imports
+from redbaron_type_hinting.adding_type_hints import (
+    add_annotations_build_imports,
+    add_annotations_and_imports,
+)
 from redbaron_type_hinting.util import read_red
 
 
 """
 pytest -s --typeguard-packages=tests/resources/test_cases
+pycharm: 
+    run -> edit -> Additional Arguments: --typeguard-packages=tests.resources.test_cases
+    Working directory: .../coding/
 """
 
 
@@ -35,8 +40,6 @@ def test_type_hints(fun_name):
 
     type_logs = build_type_log(lambda: getattr(m, "main")())
 
-    add_annotations_and_imports(input_red,type_logs)
+    add_annotations_and_imports(input_red, type_logs)
     input_py = input_red.dumps()
-    print(input_py)
-    print(expected_py)
     assert input_py == expected_py
