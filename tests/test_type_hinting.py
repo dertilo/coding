@@ -27,7 +27,7 @@ def build_type_log(run):
 
 
 @pytest.mark.parametrize("fun_name", [
-    "str_fun",
+    "simple_types",
     "union_fun"
 ])
 def test_type_hints(fun_name):
