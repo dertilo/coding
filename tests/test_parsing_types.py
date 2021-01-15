@@ -32,7 +32,13 @@ def test_parse_annotation(annotation, expected_ann, expected_imports):
             "from bazz import bar\nfrom woo.foo import waa",
             "woo_foo_bar",
             {"from woo.foo import bar as woo_foo_bar"},
-        )
+        ),
+        (
+            "typing.List[str,numpy.ndarray]",
+            "from bazz import bar\nfrom woo.foo import waa",
+            "List[str,ndarray]",
+            {"from typing import List", "from numpy import ndarray"},
+        ),
     ],
 )
 def test_parse_type_build_annotation_imports(
@@ -48,13 +54,15 @@ def test_parse_type_build_annotation_imports(
         fullpath_ann = nn.value.replace(DOT_REPLACEMENT, ".")
         *packages, import_name = fullpath_ann.split(".")
         module = ".".join(packages)
+        is_builtin = len(module) == 0
         if import_name in ann2import.keys():
             target = fullpath_ann.replace(".", "_")
             annotation = target
             new_imports.add(f"from {module} import {import_name} as {target}")
         else:
             annotation = import_name
-            new_imports.add(f"from {module} import {import_name}")
+            if not is_builtin:
+                new_imports.add(f"from {module} import {import_name}")
         nn.value = annotation
 
     assert type_red.dumps() == exp_annotation
