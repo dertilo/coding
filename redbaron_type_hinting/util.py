@@ -28,7 +28,7 @@ def read_red(py_file: str) -> RedBaron:
     return red
 
 
-@just_try(verbose=True)
+@just_try(verbose=False)
 def find_node(red: RedBaron, type_log: TypesLog):
     node_name = type_log.qualname.split(".")[-1]
     def_nodes = red.find_all("def", name=node_name)
